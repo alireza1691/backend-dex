@@ -15,6 +15,10 @@ export class RegisterResponse {
   @Field()
   activation_token: string;
 
+  // @Field(() => User, { nullable: true }) // Include the user field of type User
+  // user?: User; // Optional user field
+
+
   @Field(() => ErrorType, { nullable: true })
   error?: ErrorType;
 }
@@ -23,6 +27,7 @@ export class RegisterResponse {
 export class ActivationResponse {
   @Field(() => User)
   user: User | any;
+  
 
   @Field(() => ErrorType, { nullable: true })
   error?: ErrorType;
