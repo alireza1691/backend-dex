@@ -3,10 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { ActivationDto, LoginDto, RegisterDto } from './dto/user.dto';
+import { ActivationDto, ForgotPasswordDto, LoginDto, RegisterDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt'
 import { EmailService } from './email/email.service';
 import { TokenSender } from './utils/sendToken';
+import { User } from '@prisma/client';
 
 interface UserData {
   name: string;
@@ -142,6 +143,43 @@ export class UsersService {
     return await bcrypt.compare(password, hashedPassword);
   }
 
+  async generateForgitPasswordLink(user: User) {
+    const forgotPasswordToken = this.jwtService.sign(
+      {
+        user
+      },
+      {
+        secret: this.configService.get<string>('FORGOT_PASSWORD_SECRET'),
+        expiresIn: '5m'
+        
+      }
+    )
+
+    return forgotPasswordToken
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto){
+    const {email} = forgotPasswordDto;
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
+    if (!user) {
+      throw new BadRequestException('User with this email not existed!')
+    }
+
+    const forgotPasswordToken = await this.generateForgitPasswordLink(user)
+    const resetPasswordUrl = this.configService.get<string>('CLIENT_SIDE_URI') + `/reset-password?verify=${forgotPasswordToken}`
+    await this.emailService.sendMail({
+      email,
+      subject: 'Reset your password',
+      template: './forgot-password',
+      name: user.name,
+      activationCode: resetPasswordUrl
+    })
+    return {message:  "Your forgot password request successfully sended!"}
+  }
 
   async getLoggedInUser(req: any) {
     const user = req.user;
@@ -151,6 +189,7 @@ export class UsersService {
     return {user, refreshToken, accessToken}
 
   }
+
 
   async LogOut(req: any) {
     req.user = null;
