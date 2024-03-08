@@ -61,3 +61,26 @@ export class ForgotPasswordDto {
     email:string;
 
 }
+
+@InputType()
+export class ResetPasswordDto {
+    @Field()
+    @IsNotEmpty({message: 'Password is required.'})
+    @MinLength(8,{message: "Password must be at least 8 characters"})
+    password:string
+
+    @Field()
+    @IsNotEmpty({message: 'Activation token is requried.'})
+    activationToken: string
+}
+
+// Code Melli
+export class VerificationDto {
+    @Field()
+    @IsNotEmpty({message: 'Personal Id is required.'})
+    personalId: number
+
+    @Field()
+    @IsNotEmpty({message: 'Bank Account is required.'})
+    bankAccount: string | string[]
+}

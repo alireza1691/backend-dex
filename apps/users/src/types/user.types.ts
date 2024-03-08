@@ -71,3 +71,5 @@ export class ResetPasswordResponse {
   @Field(() => ErrorType, { nullable: true })
   error?: ErrorType;
 }
+
+ 

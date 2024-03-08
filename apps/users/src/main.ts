@@ -5,6 +5,7 @@ import { UsersModule } from './users.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(UsersModule);
+  app.enableCors()
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname,'..','servers/email-templates'));
   app.setViewEngine('ejs');
