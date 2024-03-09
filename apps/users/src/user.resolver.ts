@@ -1,10 +1,24 @@
 import { BadRequestException, UseFilters, UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Response } from 'express';
-import { ActivationDto, ForgotPasswordDto, RegisterDto, ResetPasswordDto } from './dto/user.dto';
+import {
+  ActivationDto,
+  ForgotPasswordDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerificationDto,
+} from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { AuthGuard } from './guards/auth.guard';
-import { ActivationResponse, ForgotPasswordResponse, LoginResponse, LogoutResposne, RegisterResponse, ResetPasswordResponse } from './types/user.types';
+import {
+  ActivationResponse,
+  ForgotPasswordResponse,
+  LoginResponse,
+  LogoutResposne,
+  RegisterResponse,
+  ResetPasswordResponse,
+  VerifyRequestResponse,
+} from './types/user.types';
 import { UsersService } from './users.service';
 
 @Resolver('User')
@@ -25,56 +39,61 @@ export class UsersResolver {
       context.res,
     );
     return { activation_token };
-
   }
 
   @Mutation(() => ActivationResponse)
   async activateUser(
     @Args('activationDto') activationDto: ActivationDto,
-    @Context() context: { res : Response},
+    @Context() context: { res: Response },
   ): Promise<ActivationResponse> {
-    return await this.usersService.activateUser(activationDto,context.res)
+    return await this.usersService.activateUser(activationDto, context.res);
   }
 
   @Mutation(() => LoginResponse)
   async Login(
     @Args('email') email: string,
-    @Args('password') password: string
+    @Args('password') password: string,
   ): Promise<LoginResponse> {
-    return this.usersService.Login({email,password})
+    return this.usersService.Login({ email, password });
   }
 
   @Query(() => LoginResponse)
   @UseGuards(AuthGuard)
-  async getLoggedInUser (@Context() context: {req: Request}) {  
-    return await this.usersService.getLoggedInUser(context.req)
+  async getLoggedInUser(@Context() context: { req: Request }) {
+    return await this.usersService.getLoggedInUser(context.req);
   }
 
   @Mutation(() => ForgotPasswordResponse)
-  async forgotPassword (
+  async forgotPassword(
     @Args('forgotPasswordDto') forgotPasswordDto: ForgotPasswordDto,
     // @Context() context: {res: Response}
-    ):Promise<ForgotPasswordResponse> {  
-    return await this.usersService.forgotPassword(forgotPasswordDto)
+  ): Promise<ForgotPasswordResponse> {
+    return await this.usersService.forgotPassword(forgotPasswordDto);
   }
 
   @Mutation(() => ResetPasswordResponse)
-  async resetPassword (
+  async resetPassword(
     @Args('resetPasswordDto') resetPasswordDto: ResetPasswordDto,
     // @Context() context: {res: Response}
-    ):Promise<ResetPasswordResponse> {  
-    return await this.usersService.resetPassword(resetPasswordDto)
+  ): Promise<ResetPasswordResponse> {
+    return await this.usersService.resetPassword(resetPasswordDto);
   }
-
 
   @Query(() => LogoutResposne)
   @UseGuards(AuthGuard)
-  async LogOutUser (@Context() context: {req: Request}) {  
-    return await this.usersService.LogOut(context.req)
+  async LogOutUser(@Context() context: { req: Request }) {
+    return await this.usersService.LogOut(context.req);
   }
 
   @Query(() => [User])
   async getUsers() {
     return this.usersService.getUsers();
   }
+
+  // @Mutation(() => VerifyRequestResponse)
+  // async sendVerificationData(
+  //   @Args('verificationDto') verificationDto: VerificationDto,
+  // ): Promise<VerifyRequestResponse> {
+  //    await this.usersService.sendVerificationData(verificationDto)
+  // }
 }

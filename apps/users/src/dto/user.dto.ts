@@ -74,13 +74,20 @@ export class ResetPasswordDto {
     activationToken: string
 }
 
-// Code Melli
 export class VerificationDto {
     @Field()
     @IsNotEmpty({message: 'Personal Id is required.'})
-    personalId: number
+    personalId: string
+
+    @Field()
+    @IsNotEmpty({message: 'Phone Number is required.'})
+    phone_number: number
 
     @Field()
     @IsNotEmpty({message: 'Bank Account is required.'})
-    bankAccount: string | string[]
+    bankAccount:  string[]
+}
+
+export class VerifyDto {
+
 }

@@ -48,3 +48,48 @@ export class User {
   @Field()
   updatedAt: Date;
 }
+
+export class Account {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  lastName: string;
+
+  @Field()
+  email?: string;
+
+  @Field()
+  password: string;
+
+  @Field(() => VerificationData, { nullable: true })
+  verified: VerificationData | null;
+
+
+  @Field({ nullable: true })
+  address?: string;
+
+  @Field({ nullable: true })
+  phone_number: number;
+
+  @Field()
+  createdAt: Date;
+
+  @Field()
+  updatedAt: Date;
+}
+
+export class VerificationData{
+  @Field()
+  bankAccount: string[];
+
+  @Field()
+  personalId: string;
+
+  @Field()
+  level: number;
+
+}

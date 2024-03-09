@@ -90,7 +90,7 @@ export class UsersService {
     );
     return { token, activationCode };
   }
- 
+
   async activateUser(activationDto: ActivationDto, response: Response) {
     const { activationCode, activationToken } = activationDto;
     const newUser: { user: UserData; activationCode: string } =
@@ -195,8 +195,8 @@ export class UsersService {
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const { password, activationToken } = resetPasswordDto;
     const decoded = await this.jwtService.decode(activationToken);
-    console.log("decoded expiration:",decoded.exp);
-    
+    console.log('decoded expiration:', decoded.exp);
+
     if (!decoded || decoded?.exp * 1000 < Date.now()) {
       throw new BadRequestException('Invalid Token!');
     }
@@ -232,7 +232,82 @@ export class UsersService {
     return this.prisma.user.findMany({});
   }
 
-  async sendVerification(verificationDto: VerificationDto) {
+  async sendVerificationData(verificationDto: VerificationDto) {
 
+    const { personalId, bankAccount, phone_number } = verificationDto;
+    const pendingVerification =
+    await this.prisma.pendingVerification.findUnique({
+      where: {
+        phone_number,
+      },
+    });
+
+    if (pendingVerification) {
+      throw new BadRequestException('A pending verification request is exist');
+    }
+
+    const verificationData = this.prisma.pendingVerification.create({
+      data: {
+        bankAccount,
+        personalId,
+        phone_number,
+      },
+    });
+
+    return verificationData;
+  }
+
+  async rejectVerification(phone_number: number, id: number) {
+    const pendingVerification =
+      await this.prisma.pendingVerification.findUnique({
+        where: {
+          phone_number,
+          id,
+        },
+      });
+
+    if (!pendingVerification) {
+      throw new BadRequestException('Pending verification not found');
+    }
+
+    await this.prisma.pendingVerification.delete({
+      where: {
+        phone_number,
+        id,
+      },
+    });
+  }
+
+  async verify(phone_number: number, id: number) {
+    const pendingVerification =
+      await this.prisma.pendingVerification.findUnique({
+        where: {
+          phone_number,
+          id,
+        },
+      });
+
+    if (!pendingVerification) {
+      throw new BadRequestException('Pending verification not found');
+    }
+
+    const newVerification = await this.prisma.verification.create({
+      data: {
+        personalId: pendingVerification.personalId,
+        bankAccount: pendingVerification.bankAccount,
+        userLevel: 1,
+        user: {
+          connect: { phone_number }, // Associate with the user by phone number
+        },
+      },
+    });
+    await this.prisma.pendingVerification.delete({
+      where: {
+        phone_number,
+        id,
+      },
+    });
+
+    return newVerification;
   }
 }

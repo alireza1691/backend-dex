@@ -60,3 +60,10 @@ model Verification {
   userId      Int      @unique
   userLevel   Int
 }
+
+model PendingVerification {
+  id           Int      @id @default(autoincrement())
+  personalId   String   @unique
+  bankAccount  String[] @unique
+  phone_number Float    @unique
+}

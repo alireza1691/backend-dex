@@ -72,4 +72,13 @@ export class ResetPasswordResponse {
   error?: ErrorType;
 }
 
+@ObjectType()
+export class VerifyRequestResponse {
+  @Field(() => User)
+  user: User | any;
+
+  @Field(() => ErrorType, { nullable: true })
+  error?: ErrorType;
+}
+
  
