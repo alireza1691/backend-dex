@@ -83,7 +83,7 @@ export class VerificationDto {
     @IsNotEmpty({message: 'Phone Number is required.'})
     phone_number: number
 
-    @Field()
+    @Field(() => [String])
     @IsNotEmpty({message: 'Bank Account is required.'})
     bankAccount:  string[]
 }

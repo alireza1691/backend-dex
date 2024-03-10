@@ -29,6 +29,17 @@
         "assets": ["./email-templates/**/*"],
         "watchAssets": true
       }
+    },
+    "blockchain": {
+      "type": "application",
+      "root": "apps/blockchain",
+      "entryFile": "main",
+      "sourceRoot": "apps/blockchain/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/blockchain/tsconfig.app.json",
+        "assets": [],
+        "watchAssets": true
+      }
     }
   }
 }

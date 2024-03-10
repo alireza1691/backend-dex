@@ -310,4 +310,65 @@ export class UsersService {
 
     return newVerification;
   }
+
+  async addNewBankAccountRequest(phone_number: number,personalId: string , newBankAccount : string) {
+   const existedPendingReq = await this.prisma.pendingNewBankAccountRequest.findUnique({
+    where:{
+      personalId
+    }
+   })
+   if (existedPendingReq) {
+    throw new BadRequestException("Pending request is already existed!")
+  }
+  const verification = await this.prisma.verification.findUnique({
+    where: {
+      personalId
+    }
+  })
+  if (!verification) {
+    throw new BadRequestException("User with this personal ID is not verified or may not existed!")
+  }
+  const req = await this.prisma.pendingNewBankAccountRequest.create({
+    data:{
+      personalId,
+      newBankAccount
+    }
+  })
+
+  return req
+  }
+
+  async verifyNewBankAccount(phone_number: number,personalId: string , newBankAccount : string){
+    const req = await this.prisma.pendingNewBankAccountRequest.findUnique({
+      where:{
+        personalId
+      }
+     })
+     if (!req) {
+      throw new BadRequestException("Pending request is not existed!")
+    }
+    const verification = await this.prisma.verification.findUnique({
+      where: {
+        personalId
+      }
+    })
+    if (!verification) {
+      throw new BadRequestException("User with this personal ID is not verified!")
+    }
+    const bankAccounts = verification.bankAccount.slice()
+    bankAccounts.push(newBankAccount)
+    const updatedVerificationData = await this.prisma.verification.update({
+      where:{
+        personalId
+      },
+      data: {
+        bankAccount: bankAccounts,
+        user: {
+          connect: { phone_number}, // Associate with the user by phone number
+        },
+      },
+    });
+    return updatedVerificationData
+  }
+  
 }

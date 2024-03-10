@@ -49,6 +49,18 @@ export class User {
   updatedAt: Date;
 }
 
+export class VerificationData{
+  @Field(() => [String])
+  bankAccount: string[];
+
+  @Field()
+  personalId: string;
+
+  @Field()
+  level: number;
+
+}
+
 export class Account {
   @Field()
   id: string;
@@ -82,14 +94,3 @@ export class Account {
   updatedAt: Date;
 }
 
-export class VerificationData{
-  @Field()
-  bankAccount: string[];
-
-  @Field()
-  personalId: string;
-
-  @Field()
-  level: number;
-
-}
