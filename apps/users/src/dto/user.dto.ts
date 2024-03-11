@@ -74,6 +74,7 @@ export class ResetPasswordDto {
     activationToken: string
 }
 
+@InputType()
 export class VerificationDto {
     @Field()
     @IsNotEmpty({message: 'Personal Id is required.'})

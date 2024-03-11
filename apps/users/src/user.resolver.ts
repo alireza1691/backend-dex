@@ -90,10 +90,10 @@ export class UsersResolver {
     return this.usersService.getUsers();
   }
 
-  // @Mutation(() => VerifyRequestResponse)
-  // async sendVerificationData(
-  //   @Args('verificationDto') verificationDto: VerificationDto,
-  // ): Promise<VerifyRequestResponse> {
-  //    await this.usersService.sendVerificationData(verificationDto)
-  // }
+  @Mutation(() => VerifyRequestResponse)
+  async sendVerificationData(
+    @Args('verificationDto') verificationDto: VerificationDto,
+  ): Promise<VerifyRequestResponse> {
+    return await this.usersService.sendVerificationData(verificationDto)
+  }
 }

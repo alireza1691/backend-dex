@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import Moralis from 'moralis';
 import { BlockchainModule } from './blockchain.module';
+import * as dotenv from 'dotenv';
 
 async function bootstrap() {
   const app = await NestFactory.create(BlockchainModule);

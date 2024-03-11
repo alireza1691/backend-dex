@@ -74,8 +74,15 @@ export class ResetPasswordResponse {
 
 @ObjectType()
 export class VerifyRequestResponse {
-  @Field(() => User)
-  user: User | any;
+  @Field(() => [String])
+  bankAccount: string[]
+
+  @Field()
+  personalId: string
+
+  @Field()
+  phone_number: number
+
 
   @Field(() => ErrorType, { nullable: true })
   error?: ErrorType;
