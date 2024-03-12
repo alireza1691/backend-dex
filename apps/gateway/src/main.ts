@@ -11,9 +11,9 @@ async function bootstrap() {
   await app.listen(4000);
   console.log("Listening for API calls...");
 
-  Moralis.start({
-    apiKey: 'TsLS6Uwt4tfB5QoDEmhh82BVsIRK7zqdwPI9LmTyUmt4aLend9KxfZWfpfTc7iEF',
-  });
+  // Moralis.start({
+  //   apiKey: 'TsLS6Uwt4tfB5QoDEmhh82BVsIRK7zqdwPI9LmTyUmt4aLend9KxfZWfpfTc7iEF',
+  // });
 
 }
 bootstrap();

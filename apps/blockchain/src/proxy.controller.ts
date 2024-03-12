@@ -22,7 +22,7 @@ export class ProxyController {
     );
   }
 
-  @Post('/getRequestedTokenPricesFrom1Inch')
+  @Get('/getRequestedTokenPricesFrom1Inch')
   async getRequestedTokenPricesFrom1Inch(@Body() payload: any): Promise<AxiosResponse<any>> {
     console.log("hello");
     
