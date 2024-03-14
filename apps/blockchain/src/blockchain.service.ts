@@ -31,4 +31,9 @@ export class BlockchainService {
     }
   }
 
+  async fetchDexSwap(tokenAddress: string, walletAddress: string,chainId : string): Promise<any> {
+console.log("getting.........");
+    return axios.get(`http://api.1inch.io/v6.0/${chainId}/approve/allowance?tokenAddress=${tokenAddress}&walletAddress=${walletAddress}`);
+  }
+
 }

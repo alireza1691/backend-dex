@@ -5,7 +5,7 @@ import { BlockchainService } from './blockchain.service';
 @Controller('blockchain')
 export class BlockchainController {
 
-  constructor(private readonly oneInchService: BlockchainService) {}
+  constructor(private readonly blockchainService: BlockchainService) {}
 
   @Get()
   getRoot(): string {
@@ -50,12 +50,26 @@ export class BlockchainController {
     console.log("A request detected in backend");
     
     try {
-      const quote = await this.oneInchService.getQuote(src, dst, amount);
+      const quote = await this.blockchainService.getQuote(src, dst, amount);
       return quote;
     } catch (error) {
       return { error: error.message };
     }
   }
 
-
+  @Get('/allowance')
+  async proxyTo1inch(
+    @Query('tokenAddress') tokenAddress: string,
+    @Query('walletAddress') walletAddress: string,
+    @Query('chainId') chainId: string,
+  ) {
+    try {
+      const response = await this.blockchainService.fetchDexSwap(tokenAddress, walletAddress,chainId);
+      console.log(response.data);
+      
+      return response.data;
+    } catch (error) {
+      throw new Error('Error proxying request to 1inch API');
+    }
+  }
 }

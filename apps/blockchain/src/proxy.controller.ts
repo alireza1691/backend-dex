@@ -12,8 +12,10 @@ export class ProxyController {
 
   @Get('allowance')
   getAllowance(@Query('tokenAddress') tokenAddress: string, @Query('walletAddress') walletAddress: string, @Query('chainId') chainId: string): Observable<AxiosResponse<any>> {
+    console.log("called from proxy");
+    
     return this.httpService.get(
-      `https://api.1inch.io/v5.0/${chainId}/approve/allowance`, {
+      `https://api.1inch.io/v6.0/${chainId}/approve/allowance`, {
       params: {
         tokenAddress,
         walletAddress,
