@@ -8,10 +8,16 @@ import { JwtService } from "@nestjs/jwt"
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UsersResolver } from './user.resolver';
 import { EmailModule } from './email/email.module';
+import { KavenegarModule } from '@fraybabak/kavenegar_nest';
+
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    KavenegarModule.forRoot({
+      apikey: "5675342B5473762B7A756262526B2F686D38784C424F71644E426D582B466B6E39316447624B75462B57633D",
     }),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
@@ -21,7 +27,7 @@ import { EmailModule } from './email/email.module';
     }),
     EmailModule
   ],
-  controllers: [],
+  controllers: [UsersController],
   providers: [UsersService,ConfigService,JwtService,PrismaService,UsersResolver],
 })
 export class UsersModule {}

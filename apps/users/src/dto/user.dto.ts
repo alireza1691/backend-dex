@@ -29,6 +29,31 @@ export class RegisterDto {
 }
 
 @InputType()
+export class RegisterUserDto {
+    @Field()
+    @IsNotEmpty({message: 'Name is required.'})
+    @IsString({message: "Name must needed to be one string."})
+    name:string;
+
+    @Field()
+    @IsNotEmpty({message: 'Last Name is required.'})
+    @IsString({message: "LastName must needed to be one string."})
+    lastName:string;
+
+
+    @Field()
+    @IsNotEmpty({message: 'Password is required.'})
+    @MinLength(8,{message: "Password must be at least 8 characters"})
+    password:string
+
+
+    @Field()
+    @IsNotEmpty({message: 'Phone Number is required.'})
+    phone_number:number;
+
+}
+
+@InputType()
 export class ActivationDto {
     @Field()
     @IsNotEmpty({message:"Activation Token is required"})
@@ -43,9 +68,8 @@ export class ActivationDto {
 export class LoginDto {
 
     @Field()
-    @IsNotEmpty({message: 'Email is required.'})
-    @IsEmail({},{message: "Email must be valid."})
-    email:string;
+    @IsNotEmpty({message: 'Phone Number is required.'})
+    phone_number:number;
 
     @Field()
     @IsNotEmpty({message: 'Password is required.'})

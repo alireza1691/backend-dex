@@ -43,10 +43,17 @@ model NonVerifiedUser {
   updatedAt    DateTime @updatedAt
 }
 
+model InteractedUser {
+  id           Int      @id @default(autoincrement())
+  phone_number Float    @unique
+  createdAt    DateTime @default(now())
+}
+
 model Account {
   id           Int           @id @default(autoincrement())
   name         String
   lastName     String
+  password     String
   phone_number Float         @unique
   email        String?
   verification Verification?

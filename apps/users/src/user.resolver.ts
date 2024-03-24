@@ -5,6 +5,7 @@ import {
   ActivationDto,
   ForgotPasswordDto,
   RegisterDto,
+  RegisterUserDto,
   ResetPasswordDto,
   VerificationDto,
 } from './dto/user.dto';
@@ -17,6 +18,7 @@ import {
   LogoutResposne,
   RegisterResponse,
   ResetPasswordResponse,
+  SendMessageResponse,
   VerifyRequestResponse,
 } from './types/user.types';
 import { UsersService } from './users.service';
@@ -36,6 +38,22 @@ export class UsersResolver {
 
     const { activation_token } = await this.usersService.register(
       registerDto,
+      context.res,
+    );
+    return { activation_token };
+  }
+
+  @Mutation(() => RegisterResponse)
+  async registerUser(
+    @Args('registerUserDto') registerUserDto: RegisterUserDto,
+    @Context() context: {res: Response},
+  ):Promise <RegisterResponse> {
+    if (!registerUserDto.name || !registerUserDto.lastName || !registerUserDto.password) {
+      throw new BadRequestException(' Please fill all the fields');
+    }
+
+    const { activation_token } = await this.usersService.registerUser(
+      registerUserDto,
       context.res,
     );
     return { activation_token };
@@ -90,10 +108,13 @@ export class UsersResolver {
     return this.usersService.getUsers();
   }
 
-  @Mutation(() => VerifyRequestResponse)
-  async sendVerificationData(
-    @Args('verificationDto') verificationDto: VerificationDto,
-  ): Promise<VerifyRequestResponse> {
-    return await this.usersService.sendVerificationData(verificationDto)
+
+
+  @Mutation(() => SendMessageResponse)
+  async sendMessage(
+    @Args('phoneNumber') phoneNumber: number,
+  ): Promise<SendMessageResponse> {
+    await this.usersService.sendMessage(phoneNumber,"1234");
+    return { message: 'Message sent successfully' };
   }
 }

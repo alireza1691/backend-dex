@@ -88,4 +88,10 @@ export class VerifyRequestResponse {
   error?: ErrorType;
 }
 
+@ObjectType()
+export class SendMessageResponse {
+  @Field()
+  message: string;
+}
+
  
