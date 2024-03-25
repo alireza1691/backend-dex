@@ -49,12 +49,12 @@ export class RegisterUserDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:number;
+    phone_number:string;
 
 }
 
 @InputType()
-export class ActivationDto {
+export class VerifyMessageDto {
     @Field()
     @IsNotEmpty({message:"Activation Token is required"})
     activationToken: string;
@@ -69,7 +69,7 @@ export class LoginDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:number;
+    phone_number:string;
 
     @Field()
     @IsNotEmpty({message: 'Password is required.'})
@@ -106,7 +106,7 @@ export class VerificationDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number: number
+    phone_number: string
 
     @Field(() => [String])
     @IsNotEmpty({message: 'Bank Account is required.'})

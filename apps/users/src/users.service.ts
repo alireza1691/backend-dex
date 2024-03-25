@@ -4,7 +4,7 @@ import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import { Response } from 'express';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
-  ActivationDto,
+  VerifyMessageDto,
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
@@ -15,10 +15,10 @@ import {
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email/email.service';
 import { TokenSender } from './utils/sendToken';
-import { User } from '@prisma/client';
+import { Account, User } from '@prisma/client';
 import { KavenegarService } from '@fraybabak/kavenegar_nest';
-const Kavenegar = require('kavenegar');
-const urlencode = require('urlencode');
+// const Kavenegar = require('kavenegar');
+// const urlencode = require('urlencode');
 
 
 
@@ -28,11 +28,11 @@ interface UserData {
   password: string;
   phone_number: number;
 }
-interface UserRegisterData {
+interface AccountData {
   name: string;
   lastName: string;
   password: string;
-  phone_number: number;
+  phone_number: string;
 }
 
 @Injectable()
@@ -42,10 +42,10 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
-    private readonly sender: KavenegarService
+    private readonly sender: KavenegarService,
   ) {}
 
-  async isUserRegistered(phone_number:number) {
+  async isUserRegistered(phone_number:string) {
     const isUserRegistered = await this.prisma.account.findUnique({
       where:{
         phone_number,
@@ -63,7 +63,7 @@ export class UsersService {
         }
       })
     }
-    return isUserRegistered
+    return !!isUserRegistered 
   }
 
 
@@ -82,7 +82,7 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = {
+    const user: AccountData = {
       name,
       lastName,
       password: hashedPassword,
@@ -94,22 +94,23 @@ export class UsersService {
     const activationCode = activationToken.activationCode;
     const activation_token = activationToken.token;
 
-    await this.sendMessage(phone_number,activation_token)
-    return {activation_token, response };
+    // await this.sendMessage(phone_number,activationCode)
+    return {activation_token,  activationCode,response };
   }
 
-  async verifyRegistrationMessage (activationDto: ActivationDto, response: Response) {
-    const { activationCode, activationToken } = activationDto;
-    const newUser: { user: UserRegisterData; activationCode: string } =
+  async verifyRegistrationMessage (verifyMessageDto: VerifyMessageDto, response: Response) {
+    const { activationCode, activationToken } = verifyMessageDto;
+    const newUser: { user: AccountData; activationCode: string } =
       this.jwtService.verify(activationToken, {
         secret: this.configService.get<string>('ACTIVATION_SECRET'),
-      } as JwtVerifyOptions) as { user: UserRegisterData; activationCode: string };
+      } as JwtVerifyOptions) as { user: AccountData; activationCode: string };
     if (newUser.activationCode !== activationCode) {
       throw new BadRequestException('Invalid activation code');
     }
-
+    console.log(newUser.activationCode == activationCode ? "matched":"deos not match");
+    
     const { name, lastName, password, phone_number } = newUser.user;
-    const existUser = await this.prisma.user.findUnique({
+    const existUser = await this.prisma.account.findUnique({
       where: {
         phone_number,
       },
@@ -129,98 +130,10 @@ export class UsersService {
     return {user, response}
   }
 
-  async register(registerDto: RegisterDto, response: Response) {
-    const { name, email, password, phone_number } = registerDto;
-    const IsEmailExist = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (IsEmailExist) {
-      throw new BadRequestException('User already registered with this email ');
-    }
 
-    const isPhoneNumberExist = await this.prisma.user.findUnique({
-      where: {
-        phone_number,
-      },
-    });
-    if (isPhoneNumberExist) {
-      throw new BadRequestException(
-        'User already registered with this phone number ',
-      );
-    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = {
-      name,
-      email,
-      password: hashedPassword,
-      phone_number,
-      // address
-    };
-    const activationToken = await this.createActivationToken(user);
-    const activationCode = activationToken.activationCode;
-    const activation_token = activationToken.token;
 
-    await this.emailService.sendMail({
-      email,
-      subject: 'Active your account',
-      template: './activation-mail',
-      name,
-      activationCode,
-    });
-    return { activation_token, response };
-  }
-
-  async createActivationToken(user: UserData | UserRegisterData | string) {
-    const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const token = this.jwtService.sign(
-      {
-        user,
-        activationCode,
-      },
-      {
-        secret: this.configService.get<string>('ACTIVATION_SECRET'),
-        expiresIn: '5m',
-      },
-    );
-    return { token, activationCode };
-  }
-
-  async activateUser(activationDto: ActivationDto, response: Response) {
-    const { activationCode, activationToken } = activationDto;
-    const newUser: { user: UserData; activationCode: string } =
-      this.jwtService.verify(activationToken, {
-        secret: this.configService.get<string>('ACTIVATION_SECRET'),
-      } as JwtVerifyOptions) as { user: UserData; activationCode: string };
-    if (newUser.activationCode !== activationCode) {
-      throw new BadRequestException('Invalid activation code');
-    }
-
-    const { name, email, password, phone_number } = newUser.user;
-    const existUser = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (existUser) {
-      throw new BadRequestException('A user is already exist with this email!');
-    }
-
-    const user = await this.prisma.user.create({
-      data: {
-        name,
-        email,
-        password,
-        phone_number,
-      },
-    });
-
-    return { user, response };
-  }
-
-  async Login(loginDto: LoginDto) {
+  async Login(loginDto: LoginDto, response:Response) {
     const { phone_number, password } = loginDto;
     const user = await this.prisma.account.findUnique({
       where: {
@@ -228,11 +141,43 @@ export class UsersService {
       },
     });
     if (user && (await this.comparePassword(password, user.password))) {
-      const tokenSender = new TokenSender(this.configService, this.jwtService);
-      return tokenSender.sendLoginToken(user);
+
+      const activationToken = await this.createActivationToken(user);
+      const activationCode = activationToken.activationCode;
+      const activation_token = activationToken.token;
+  
+      await this.sendMessage(phone_number,activationCode)
+      // const tokenSender = new TokenSender(this.configService, this.jwtService);
+      // return tokenSender.sendLoginToken(user);
+      return{activation_token, activationCode,response}
     } else {
-      // throw new BadRequestException('Invalid credentials')
-      return {
+      throw new BadRequestException('Invalid credentials')
+      // return {
+      //   user: null,
+      //   accessToken: null,
+      //   refreshToken: null,
+      //   error: {
+      //     message: 'Invalid user name or password',
+      //   },
+      // };
+    }
+  }
+
+
+  async ConfirmLoginByMessage(verifyMessageDto:VerifyMessageDto){
+
+    const {isMessageVerified,userPhoneNumber }= await this.VerifyMessage(verifyMessageDto)
+
+    if (isMessageVerified) {
+      const tokenSender = new TokenSender(this.configService, this.jwtService);
+      const account = await this.prisma.account.findUnique({
+        where:{
+          phone_number: userPhoneNumber
+        }
+      })
+      return tokenSender.sendLoginToken(account);
+    } else{
+       return {
         user: null,
         accessToken: null,
         refreshToken: null,
@@ -240,15 +185,12 @@ export class UsersService {
           message: 'Invalid user name or password',
         },
       };
+      // throw new BadRequestException('Invalid activation code');
     }
+
+    // const { name, lastName, password, phone_number } = newUser.user;
   }
 
-  async comparePassword(
-    password: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
-    return await bcrypt.compare(password, hashedPassword);
-  }
 
   async generateForgotPasswordLink(user: User) {
     const forgotPasswordToken = this.jwtService.sign(
@@ -353,7 +295,7 @@ export class UsersService {
     return verificationData;
   }
 
-  async rejectVerification(phone_number: number, id: number) {
+  async rejectVerification(phone_number: string, id: number) {
     const pendingVerification =
       await this.prisma.pendingVerification.findUnique({
         where: {
@@ -374,7 +316,7 @@ export class UsersService {
     });
   }
 
-  async verify(phone_number: number, id: number) {
+  async verify(phone_number: string, id: number) {
     const pendingVerification =
       await this.prisma.pendingVerification.findUnique({
         where: {
@@ -408,7 +350,7 @@ export class UsersService {
   }
 
   async addNewBankAccountRequest(
-    phone_number: number,
+    phone_number: string,
     personalId: string,
     newBankAccount: string,
   ) {
@@ -442,7 +384,7 @@ export class UsersService {
   }
 
   async verifyNewBankAccount(
-    phone_number: number,
+    phone_number: string,
     personalId: string,
     newBankAccount: string,
   ) {
@@ -480,7 +422,40 @@ export class UsersService {
     return updatedVerificationData;
   }
 
-  async sendMessage(phone_number: number, activation_code: string) {
+  async comparePassword(
+    password: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(password, hashedPassword);
+  }
+
+  async createActivationToken(user: UserData | AccountData ) {
+    const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const token = this.jwtService.sign(
+      {
+        user,
+        activationCode,
+      },
+      {
+        secret: this.configService.get<string>('ACTIVATION_SECRET'),
+        expiresIn: '5m',
+      },
+    );
+    return { token, activationCode };
+  }
+  async VerifyMessage(verifyMessageDto:VerifyMessageDto){
+    const { activationCode, activationToken } = verifyMessageDto;
+    const account: { user: AccountData; activationCode: string } =
+      this.jwtService.verify(activationToken, {
+        secret: this.configService.get<string>('ACTIVATION_SECRET'),
+      } as JwtVerifyOptions) as { user: AccountData; activationCode: string };
+      const isMessageVerified= account.activationCode == activationCode 
+      const userPhoneNumber = account.user.phone_number || ""
+      return {isMessageVerified,userPhoneNumber }
+
+  }
+
+  async sendMessage(phone_number: string, activation_code: string) {
     // const api = Kavenegar.KavenegarApi({
     //   apikey:
     //     '5675342B5473762B7A756262526B2F686D38784C424F71644E426D582B466B6E39316447624B75462B57633D', // Replace {Your API Key} with your actual API key
@@ -514,30 +489,102 @@ export class UsersService {
           message: 'وب سرویس تخصصی کاوه نگار',
           // message: encodedMessage,
           sender: '10008663',
-          receptor: phone_number.toString(),
+          receptor: phone_number,
 
         },
       )
       console.log("sended");
  
-
-
   }
 
-  async verifyMessage(activationDto:ActivationDto, response: Response) {
+  // async verifyMessage(activationDto:VerifyMessageDto, response: Response) {
 
+  //   const { activationCode, activationToken } = activationDto;
+  //   const userObj: { phone_number: string; activationCode: string } =
+  //     this.jwtService.verify(activationToken, {
+  //       secret: this.configService.get<string>('ACTIVATION_SECRET'),
+  //     } as JwtVerifyOptions) as { phone_number: string; activationCode: string };
+  //     const isMatched = userObj.activationCode == activationCode
+  //   // if (!isMatched) {
+  //   //   throw new BadRequestException('Invalid activation code');
+  //   // }
+
+  //   return {isMatched,response}
+  // }
+  async register(registerDto: RegisterDto, response: Response) {
+    const { name, email, password, phone_number } = registerDto;
+    const IsEmailExist = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (IsEmailExist) {
+      throw new BadRequestException('User already registered with this email ');
+    }
+
+    const isPhoneNumberExist = await this.prisma.user.findUnique({
+      where: {
+        phone_number,
+      },
+    });
+    if (isPhoneNumberExist) {
+      throw new BadRequestException(
+        'User already registered with this phone number ',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = {
+      name,
+      email,
+      password: hashedPassword,
+      phone_number,
+      // address
+    };
+    const activationToken = await this.createActivationToken(user);
+    const activationCode = activationToken.activationCode;
+    const activation_token = activationToken.token;
+
+    await this.emailService.sendMail({
+      email,
+      subject: 'Active your account',
+      template: './activation-mail',
+      name,
+      activationCode,
+    });
+    return { activation_token, response };
+  }
+
+  async activateUser(activationDto: VerifyMessageDto, response: Response) {
     const { activationCode, activationToken } = activationDto;
-    const userObj: { phone_number: string; activationCode: string } =
+    const newUser: { user: UserData; activationCode: string } =
       this.jwtService.verify(activationToken, {
         secret: this.configService.get<string>('ACTIVATION_SECRET'),
-      } as JwtVerifyOptions) as { phone_number: string; activationCode: string };
-      const isMatched = userObj.activationCode == activationCode
-    // if (!isMatched) {
-    //   throw new BadRequestException('Invalid activation code');
-    // }
+      } as JwtVerifyOptions) as { user: UserData; activationCode: string };
+    if (newUser.activationCode !== activationCode) {
+      throw new BadRequestException('Invalid activation code');
+    }
 
-    return {isMatched,response}
+    const { name, email, password, phone_number } = newUser.user;
+    const existUser = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (existUser) {
+      throw new BadRequestException('A user is already exist with this email!');
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        password,
+        phone_number,
+      },
+    });
+
+    return { user, response };
   }
-
 
 }

@@ -49,6 +49,7 @@ export class User {
   updatedAt: Date;
 }
 
+@ObjectType()
 export class VerificationData{
   @Field(() => [String])
   bankAccount: string[];
@@ -61,6 +62,7 @@ export class VerificationData{
 
 }
 
+@ObjectType()
 export class Account {
   @Field()
   id: string;
@@ -78,14 +80,11 @@ export class Account {
   password: string;
 
   @Field(() => VerificationData, { nullable: true })
-  verified: VerificationData | null;
+  verified?: VerificationData | null;
 
 
-  @Field({ nullable: true })
-  address?: string;
-
-  @Field({ nullable: true })
-  phone_number: number;
+  @Field()
+  phone_number: string;
 
   @Field()
   createdAt: Date;

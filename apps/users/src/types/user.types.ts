@@ -1,5 +1,8 @@
 import { ObjectType, Field } from '@nestjs/graphql';
-import { User } from '../entities/user.entity';
+
+import { Account, User } from '../entities/user.entity';
+
+
 
 @ObjectType()
 export class ErrorType {
@@ -15,10 +18,24 @@ export class RegisterResponse {
   @Field()
   activation_token: string;
 
+  @Field()
+  activationCode: string;
+
   // @Field(() => User, { nullable: true }) // Include the user field of type User
   // user?: User; // Optional user field
 
 
+  @Field(() => ErrorType, { nullable: true })
+  error?: ErrorType;
+}
+
+
+@ObjectType()
+export class RegistrationConfirmResponse{
+  @Field()
+  user: Account 
+
+ 
   @Field(() => ErrorType, { nullable: true })
   error?: ErrorType;
 }
@@ -92,6 +109,21 @@ export class VerifyRequestResponse {
 export class SendMessageResponse {
   @Field()
   message: string;
+}
+
+@ObjectType()
+export class LoginReqResponse {
+
+  @Field()
+  activation_token: string;
+
+
+  @Field()
+  activationCode: string;
+
+
+  @Field(() => ErrorType, { nullable: true })
+  error?: ErrorType;
 }
 
  

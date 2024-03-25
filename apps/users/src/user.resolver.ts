@@ -1,22 +1,27 @@
 import { BadRequestException, UseFilters, UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Response } from 'express';
+import { stringify } from 'querystring';
 import {
-  ActivationDto,
+  // ActivationDto,
   ForgotPasswordDto,
+  LoginDto,
   RegisterDto,
   RegisterUserDto,
   ResetPasswordDto,
   VerificationDto,
+  VerifyMessageDto,
 } from './dto/user.dto';
-import { User } from './entities/user.entity';
+import { User,Account } from './entities/user.entity';
 import { AuthGuard } from './guards/auth.guard';
 import {
   ActivationResponse,
   ForgotPasswordResponse,
+  LoginReqResponse,
   LoginResponse,
   LogoutResposne,
   RegisterResponse,
+  RegistrationConfirmResponse,
   ResetPasswordResponse,
   SendMessageResponse,
   VerifyRequestResponse,
@@ -27,21 +32,21 @@ import { UsersService } from './users.service';
 // @UseFilters
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
-  @Mutation(() => RegisterResponse)
-  async register(
-    @Args('registerDto') registerDto: RegisterDto,
-    @Context() context: { res: Response },
-  ): Promise<RegisterResponse> {
-    if (!registerDto.name || !registerDto.email || !registerDto.password) {
-      throw new BadRequestException(' Please fill all the fields');
-    }
+  // @Mutation(() => RegisterResponse)
+  // async register(
+  //   @Args('registerDto') registerDto: RegisterDto,
+  //   @Context() context: { res: Response },
+  // ): Promise<RegisterResponse> {
+  //   if (!registerDto.name || !registerDto.email || !registerDto.password) {
+  //     throw new BadRequestException(' Please fill all the fields');
+  //   }
 
-    const { activation_token } = await this.usersService.register(
-      registerDto,
-      context.res,
-    );
-    return { activation_token };
-  }
+  //   const { activation_token } = await this.usersService.register(
+  //     registerDto,
+  //     context.res,
+  //   );
+  //   return { activation_token };
+  // }
 
   @Mutation(() => RegisterResponse)
   async registerUser(
@@ -52,27 +57,53 @@ export class UsersResolver {
       throw new BadRequestException(' Please fill all the fields');
     }
 
-    const { activation_token } = await this.usersService.registerUser(
+    const { activation_token,activationCode,response } = await this.usersService.registerUser(
       registerUserDto,
       context.res,
     );
-    return { activation_token };
+    return { activation_token,activationCode };
   }
 
-  @Mutation(() => ActivationResponse)
-  async activateUser(
-    @Args('activationDto') activationDto: ActivationDto,
-    @Context() context: { res: Response },
-  ): Promise<ActivationResponse> {
-    return await this.usersService.activateUser(activationDto, context.res);
+  @Mutation(()=> RegistrationConfirmResponse)
+  async verifyRegistrationMessage(
+    @Args('verifyMessageDto')verifyMessageDto: VerifyMessageDto,
+    @Context() context: {res: Response},
+  ):Promise <RegistrationConfirmResponse>{
+    const {user} = await this.usersService.verifyRegistrationMessage(verifyMessageDto,context.res)
+    return {user}
+  }
+
+  @Mutation(()=> Boolean)
+  async isNumberExist(
+    @Args('phone_number')phone_number: string,
+    // @Context() context: {res: Response},
+  ): Promise <boolean>{
+    console.log("number entered");
+    
+    return await this.usersService.isUserRegistered(phone_number)
+  }
+
+  // @Mutation(() => ActivationResponse)
+  // async activateUser(
+  //   @Args('activationDto') activationDto: ActivationDto,
+  //   @Context() context: { res: Response },
+  // ): Promise<ActivationResponse> {
+  //   return await this.usersService.activateUser(activationDto, context.res);
+  // }
+
+  @Mutation(() => LoginReqResponse)
+  async Login(
+    @Args('loginDto') loginDto: LoginDto,
+    @Context() context: {res: Response},
+  ): Promise<LoginReqResponse> {
+    return this.usersService.Login(loginDto, context.res);
   }
 
   @Mutation(() => LoginResponse)
-  async Login(
-    @Args('email') email: string,
-    @Args('password') password: string,
+  async ConfirmLoginByMessage(
+    @Args('verifyMessageDto') verifyMessageDto: VerifyMessageDto,
   ): Promise<LoginResponse> {
-    return this.usersService.Login({ email, password });
+    return this.usersService.ConfirmLoginByMessage(verifyMessageDto)
   }
 
   @Query(() => LoginResponse)
@@ -112,9 +143,11 @@ export class UsersResolver {
 
   @Mutation(() => SendMessageResponse)
   async sendMessage(
-    @Args('phoneNumber') phoneNumber: number,
+    @Args('phoneNumber') phoneNumber: string,
   ): Promise<SendMessageResponse> {
     await this.usersService.sendMessage(phoneNumber,"1234");
     return { message: 'Message sent successfully' };
   }
+
+
 }
