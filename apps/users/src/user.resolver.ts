@@ -61,7 +61,12 @@ export class UsersResolver {
       registerUserDto,
       context.res,
     );
-    return { activation_token,activationCode };
+    console.log(activation_token,activationCode);
+    if (!activation_token || !activationCode) {
+      throw new Error('Activation tokens not provided');
+    }
+    
+    return { activation_token,activationCode};
   }
 
   @Mutation(()=> RegistrationConfirmResponse)
