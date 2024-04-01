@@ -7,26 +7,27 @@ import {
   VerifyMessageDto,
   ForgotPasswordDto,
   LoginDto,
-  RegisterDto,
+
   RegisterUserDto,
   ResetPasswordDto,
-  VerificationDto,
+  VerificationStepOneDto,
+  VerificationStepTwoDto,
+  AttachGmailDto,
 } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email/email.service';
 import { TokenSender } from './utils/sendToken';
 import { Account, User } from '@prisma/client';
 import { KavenegarService } from '@fraybabak/kavenegar_nest';
+import { PendingVerificationData } from './entities/user.entity';
 // const Kavenegar = require('kavenegar');
 // const urlencode = require('urlencode');
-
-
 
 interface UserData {
   name: string;
   email: string;
   password: string;
-  phone_number: number;
+  phone_number: string;
 }
 interface AccountData {
   name: string;
@@ -45,30 +46,28 @@ export class UsersService {
     private readonly sender: KavenegarService,
   ) {}
 
-  async isUserRegistered(phone_number:string) {
+  async IsUserRegistered(phone_number: string) {
     const isUserRegistered = await this.prisma.account.findUnique({
-      where:{
+      where: {
         phone_number,
-      }
-    })
+      },
+    });
     const isNumberExist = await this.prisma.interactedUser.findUnique({
-      where:{
+      where: {
         phone_number,
-      }
-    })
+      },
+    });
     if (!isNumberExist) {
       await this.prisma.interactedUser.create({
-        data:{
+        data: {
           phone_number,
-        }
-      })
+        },
+      });
     }
-    return !!isUserRegistered 
+    return !!isUserRegistered;
   }
 
-
-
-  async registerUser(registerUserDto: RegisterUserDto, response: Response) {
+  async RegisterUser(registerUserDto: RegisterUserDto) {
     const { name, lastName, password, phone_number } = registerUserDto;
     const IsNumberExist = await this.prisma.account.findUnique({
       where: {
@@ -89,16 +88,18 @@ export class UsersService {
       phone_number,
     };
 
-
     const activationToken = await this.createActivationToken(user);
     const activationCode = activationToken.activationCode;
     const activation_token = activationToken.token;
 
     // await this.sendMessage(phone_number,activationCode)
-    return {activation_token,  activationCode,response };
+    return { activation_token, activationCode};
   }
 
-  async verifyRegistrationMessage (verifyMessageDto: VerifyMessageDto, response: Response) {
+  async VerifyRegistrationMessage(
+    verifyMessageDto: VerifyMessageDto,
+
+  ) {
     const { activationCode, activationToken } = verifyMessageDto;
     const newUser: { user: AccountData; activationCode: string } =
       this.jwtService.verify(activationToken, {
@@ -107,8 +108,10 @@ export class UsersService {
     if (newUser.activationCode !== activationCode) {
       throw new BadRequestException('Invalid activation code');
     }
-    console.log(newUser.activationCode == activationCode ? "matched":"deos not match");
-    
+    console.log(
+      newUser.activationCode == activationCode ? 'matched' : 'deos not match',
+    );
+
     const { name, lastName, password, phone_number } = newUser.user;
     const existUser = await this.prisma.account.findUnique({
       where: {
@@ -116,42 +119,44 @@ export class UsersService {
       },
     });
     if (existUser) {
-      throw new BadRequestException('A user is already exist with this phone number!');
+      throw new BadRequestException(
+        'A user is already exist with this phone number!',
+      );
     }
     const user = await this.prisma.account.create({
-      data:{
+      data: {
         name,
         lastName,
         phone_number,
-        password
-      }
-    })
+        password,
+      },
+    });
 
-    return {user, response}
+    return { user};
   }
 
 
-
-
-  async Login(loginDto: LoginDto, response:Response) {
+  async Login(loginDto: LoginDto, response: Response) {
     const { phone_number, password } = loginDto;
     const user = await this.prisma.account.findUnique({
       where: {
         phone_number,
       },
     });
-    if (user && (await this.comparePassword(password, user.password))) {
+    console.log(password, user.password);
 
+    if (user && (await this.comparePassword(password, user.password))) {
       const activationToken = await this.createActivationToken(user);
       const activationCode = activationToken.activationCode;
       const activation_token = activationToken.token;
-  
-      await this.sendMessage(phone_number,activationCode)
+
+      // await this.sendMessage(phone_number,activationCode)
+
       // const tokenSender = new TokenSender(this.configService, this.jwtService);
       // return tokenSender.sendLoginToken(user);
-      return{activation_token, activationCode,response}
+      return { activation_token, activationCode, response };
     } else {
-      throw new BadRequestException('Invalid credentials')
+      throw new BadRequestException('Invalid credentials');
       // return {
       //   user: null,
       //   accessToken: null,
@@ -163,21 +168,22 @@ export class UsersService {
     }
   }
 
+  async VerifyLogin(verifyMessageDto: VerifyMessageDto) {
+    console.log('verify login called');
 
-  async ConfirmLoginByMessage(verifyMessageDto:VerifyMessageDto){
-
-    const {isMessageVerified,userPhoneNumber }= await this.VerifyMessage(verifyMessageDto)
+    const { isMessageVerified, userPhoneNumber } =
+      await this.verifyMessage(verifyMessageDto);
 
     if (isMessageVerified) {
       const tokenSender = new TokenSender(this.configService, this.jwtService);
       const account = await this.prisma.account.findUnique({
-        where:{
-          phone_number: userPhoneNumber
-        }
-      })
+        where: {
+          phone_number: userPhoneNumber,
+        },
+      });
       return tokenSender.sendLoginToken(account);
-    } else{
-       return {
+    } else {
+      return {
         user: null,
         accessToken: null,
         refreshToken: null,
@@ -190,7 +196,6 @@ export class UsersService {
 
     // const { name, lastName, password, phone_number } = newUser.user;
   }
-
 
   async generateForgotPasswordLink(user: User) {
     const forgotPasswordToken = this.jwtService.sign(
@@ -206,7 +211,8 @@ export class UsersService {
     return forgotPasswordToken;
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+
+  async ForgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const { email } = forgotPasswordDto;
     const user = await this.prisma.user.findUnique({
       where: {
@@ -231,7 +237,7 @@ export class UsersService {
     return { message: 'Your forgot password request successfully sended!' };
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+  async ResetPassword(resetPasswordDto: ResetPasswordDto) {
     const { password, activationToken } = resetPasswordDto;
     const decoded = await this.jwtService.decode(activationToken);
     console.log('decoded expiration:', decoded.exp);
@@ -252,11 +258,13 @@ export class UsersService {
     return { user };
   }
 
-  async getLoggedInUser(req: any) {
+  async GetLoggedInUser(req: any) {
     const user = req.user;
     const refreshToken = req.refreshtoken;
     const accessToken = req.accesstoken;
     // console.log({user, refreshToken, accessToken});
+    console.log(user);
+    
     return { user, refreshToken, accessToken };
   }
 
@@ -267,12 +275,13 @@ export class UsersService {
     return { message: 'Logged out successfully!' };
   }
 
-  async getUsers() {
+  async GetUsers() {
     return this.prisma.user.findMany({});
   }
 
-  async sendVerificationData(verificationDto: VerificationDto) {
-    const { personalId, bankAccount, phone_number } = verificationDto;
+  async VerifyAccountStepOne(verificationStepOneDto: VerificationStepOneDto) {
+    const { personalId, personalCardImageUrl, phone_number } =
+      verificationStepOneDto;
     const pendingVerification =
       await this.prisma.pendingVerification.findUnique({
         where: {
@@ -281,146 +290,90 @@ export class UsersService {
       });
 
     if (pendingVerification) {
-      throw new BadRequestException('A pending verification request is exist');
+      throw new BadRequestException(
+        'A verification request with this phone number is already exist',
+      );
     }
 
-    const verificationData = this.prisma.pendingVerification.create({
+    const verificationData:PendingVerificationData = await this.prisma.pendingVerification.create({
       data: {
-        bankAccount,
         personalId,
         phone_number,
+        personalCardImageUrl,
+        isReadyToCheck: false,
       },
     });
+    return verificationData
+  }
+
+  async VerifyAccountStepTwo(verificationStepTwoDto: VerificationStepTwoDto) {
+    const { userImageUrl, phone_number, userVerifyTextImageUrl } =
+    verificationStepTwoDto;
+    const pendingVerification = await this.prisma.pendingVerification.findUnique({
+        where: {
+          phone_number,
+        },
+      });
+
+
+        if (pendingVerification && pendingVerification?.isReadyToCheck ) {
+          throw new BadRequestException(
+            'A pending verification request is already exist',
+          );
+        }
+  
+ 
+
+    const verificationData = this.prisma.pendingVerification.update({
+      where: {
+        phone_number,
+      },
+      data: {
+        userVerifyTextImageUrl,
+        userImageUrl,
+        isReadyToCheck: true,
+      },
+    });
+
+  
 
     return verificationData;
   }
 
-  async rejectVerification(phone_number: string, id: number) {
-    const pendingVerification =
-      await this.prisma.pendingVerification.findUnique({
-        where: {
-          phone_number,
-          id,
-        },
-      });
+  // async AddNewBankAccountRequest(
+  //   phone_number: string,
+  //   cardNumber: string,
+  //   shabaNumber: string,
+  // ) {
+  //   const existedPendingReq =
+  //     await this.prisma.pendingNewBankAccountRequest.findUnique({
+  //       where: {
+  //         phone_number,
+  //       },
+  //     });
+  //   if (existedPendingReq) {
+  //     throw new BadRequestException('Pending request is already existed!');
+  //   }
+  //   const verification = await this.prisma.verification.findUnique({
+  //     where: {
+  //       phone_number,
+  //     },
+  //   });
+  //   if (!verification) {
+  //     throw new BadRequestException(
+  //       'User with this personal ID is not verified or may not existed!',
+  //     );
+  //   }
+  //   const req = await this.prisma.pendingNewBankAccountRequest.create({
+  //     data: {
+  //       phone_number,
+  //       shabaNumber,
+  //       cardNumber,
+  //     },
+  //   });
 
-    if (!pendingVerification) {
-      throw new BadRequestException('Pending verification not found');
-    }
-
-    await this.prisma.pendingVerification.delete({
-      where: {
-        phone_number,
-        id,
-      },
-    });
-  }
-
-  async verify(phone_number: string, id: number) {
-    const pendingVerification =
-      await this.prisma.pendingVerification.findUnique({
-        where: {
-          phone_number,
-          id,
-        },
-      });
-
-    if (!pendingVerification) {
-      throw new BadRequestException('Pending verification not found');
-    }
-
-    const newVerification = await this.prisma.verification.create({
-      data: {
-        personalId: pendingVerification.personalId,
-        bankAccount: pendingVerification.bankAccount,
-        userLevel: 1,
-        user: {
-          connect: { phone_number }, // Associate with the user by phone number
-        },
-      },
-    });
-    await this.prisma.pendingVerification.delete({
-      where: {
-        phone_number,
-        id,
-      },
-    });
-
-    return newVerification;
-  }
-
-  async addNewBankAccountRequest(
-    phone_number: string,
-    personalId: string,
-    newBankAccount: string,
-  ) {
-    const existedPendingReq =
-      await this.prisma.pendingNewBankAccountRequest.findUnique({
-        where: {
-          personalId,
-        },
-      });
-    if (existedPendingReq) {
-      throw new BadRequestException('Pending request is already existed!');
-    }
-    const verification = await this.prisma.verification.findUnique({
-      where: {
-        personalId,
-      },
-    });
-    if (!verification) {
-      throw new BadRequestException(
-        'User with this personal ID is not verified or may not existed!',
-      );
-    }
-    const req = await this.prisma.pendingNewBankAccountRequest.create({
-      data: {
-        personalId,
-        newBankAccount,
-      },
-    });
-
-    return req;
-  }
-
-  async verifyNewBankAccount(
-    phone_number: string,
-    personalId: string,
-    newBankAccount: string,
-  ) {
-    const req = await this.prisma.pendingNewBankAccountRequest.findUnique({
-      where: {
-        personalId,
-      },
-    });
-    if (!req) {
-      throw new BadRequestException('Pending request is not existed!');
-    }
-    const verification = await this.prisma.verification.findUnique({
-      where: {
-        personalId,
-      },
-    });
-    if (!verification) {
-      throw new BadRequestException(
-        'User with this personal ID is not verified!',
-      );
-    }
-    const bankAccounts = verification.bankAccount.slice();
-    bankAccounts.push(newBankAccount);
-    const updatedVerificationData = await this.prisma.verification.update({
-      where: {
-        personalId,
-      },
-      data: {
-        bankAccount: bankAccounts,
-        user: {
-          connect: { phone_number }, // Associate with the user by phone number
-        },
-      },
-    });
-    return updatedVerificationData;
-  }
+  //   return req;
+  // }
 
   async comparePassword(
     password: string,
@@ -429,7 +382,7 @@ export class UsersService {
     return await bcrypt.compare(password, hashedPassword);
   }
 
-  async createActivationToken(user: UserData | AccountData ) {
+  async createActivationToken(user: UserData | AccountData) {
     const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
     const token = this.jwtService.sign(
       {
@@ -443,16 +396,16 @@ export class UsersService {
     );
     return { token, activationCode };
   }
-  async VerifyMessage(verifyMessageDto:VerifyMessageDto){
+  
+  async verifyMessage(verifyMessageDto: VerifyMessageDto) {
     const { activationCode, activationToken } = verifyMessageDto;
     const account: { user: AccountData; activationCode: string } =
       this.jwtService.verify(activationToken, {
         secret: this.configService.get<string>('ACTIVATION_SECRET'),
       } as JwtVerifyOptions) as { user: AccountData; activationCode: string };
-      const isMessageVerified= account.activationCode == activationCode 
-      const userPhoneNumber = account.user.phone_number || ""
-      return {isMessageVerified,userPhoneNumber }
-
+    const isMessageVerified = account.activationCode == activationCode;
+    const userPhoneNumber = account.user.phone_number || '';
+    return { isMessageVerified, userPhoneNumber };
   }
 
   async sendMessage(phone_number: string, activation_code: string) {
@@ -480,39 +433,21 @@ export class UsersService {
     // }
     // const encodedMessage = encodeURIComponent( 'وب سرویس تخصصی کاوه نگار')
 
-  //   template: string;
-  // token: string;
-  // token2?: string;
-  // receptor: string;
-      await this.sender.Send(
-        {
-          message: 'وب سرویس تخصصی کاوه نگار',
-          // message: encodedMessage,
-          sender: '10008663',
-          receptor: phone_number,
-
-        },
-      )
-      console.log("sended");
- 
+    //   template: string;
+    // token: string;
+    // token2?: string;
+    // receptor: string;
+    await this.sender.Send({
+      message: 'وب سرویس تخصصی کاوه نگار',
+      // message: encodedMessage,
+      sender: '10008663',
+      receptor: phone_number,
+    });
+    console.log('sended');
   }
 
-  // async verifyMessage(activationDto:VerifyMessageDto, response: Response) {
-
-  //   const { activationCode, activationToken } = activationDto;
-  //   const userObj: { phone_number: string; activationCode: string } =
-  //     this.jwtService.verify(activationToken, {
-  //       secret: this.configService.get<string>('ACTIVATION_SECRET'),
-  //     } as JwtVerifyOptions) as { phone_number: string; activationCode: string };
-  //     const isMatched = userObj.activationCode == activationCode
-  //   // if (!isMatched) {
-  //   //   throw new BadRequestException('Invalid activation code');
-  //   // }
-
-  //   return {isMatched,response}
-  // }
-  async register(registerDto: RegisterDto, response: Response) {
-    const { name, email, password, phone_number } = registerDto;
+  async AttachGmail(registerDto: AttachGmailDto) {
+    const { email, phone_number } = registerDto;
     const IsEmailExist = await this.prisma.user.findUnique({
       where: {
         email,
@@ -522,25 +457,26 @@ export class UsersService {
       throw new BadRequestException('User already registered with this email ');
     }
 
-    const isPhoneNumberExist = await this.prisma.user.findUnique({
+    const isUserExist = await this.prisma.account.findUnique({
       where: {
         phone_number,
       },
     });
-    if (isPhoneNumberExist) {
+    if (!isUserExist) {
       throw new BadRequestException(
-        'User already registered with this phone number ',
+        'User is not registered with this phone number ',
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = {
-      name,
+   
+    const user :UserData= {
+      name:isUserExist.name,
       email,
-      password: hashedPassword,
+      password: isUserExist.password,
       phone_number,
       // address
     };
+
     const activationToken = await this.createActivationToken(user);
     const activationCode = activationToken.activationCode;
     const activation_token = activationToken.token;
@@ -549,42 +485,50 @@ export class UsersService {
       email,
       subject: 'Active your account',
       template: './activation-mail',
-      name,
+      name:isUserExist.name,
       activationCode,
     });
-    return { activation_token, response };
+    return { activation_token };
   }
 
-  async activateUser(activationDto: VerifyMessageDto, response: Response) {
+  async ActivateGmail(activationDto: VerifyMessageDto) {
     const { activationCode, activationToken } = activationDto;
-    const newUser: { user: UserData; activationCode: string } =
+    const relevantUser: { user: UserData; activationCode: string } =
       this.jwtService.verify(activationToken, {
         secret: this.configService.get<string>('ACTIVATION_SECRET'),
       } as JwtVerifyOptions) as { user: UserData; activationCode: string };
-    if (newUser.activationCode !== activationCode) {
+    if (relevantUser.activationCode !== activationCode) {
       throw new BadRequestException('Invalid activation code');
     }
 
-    const { name, email, password, phone_number } = newUser.user;
-    const existUser = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (existUser) {
-      throw new BadRequestException('A user is already exist with this email!');
-    }
+    const { email,phone_number } = relevantUser.user;
+    // const existUser = await this.prisma.account.findUnique({
+    //   where: {
+    //     phone_number,
+    //   },
+    // });
+    // if (existUser.email) {
+    //   throw new BadRequestException('A user is already exist with this email!');
+    // }
 
-    const user = await this.prisma.user.create({
+    const user = await this.prisma.account.update({
+      where:{phone_number},
       data: {
-        name,
-        email,
-        password,
-        phone_number,
+        email
       },
     });
 
-    return { user, response };
+    return { user};
   }
 
+
+  async getVerificationStatus(phone_number:string){
+    const req:PendingVerificationData = await this.prisma.pendingVerification.findUnique({
+      where:{
+        phone_number
+      }
+    })
+
+    return req ? req : null
+  }
 }

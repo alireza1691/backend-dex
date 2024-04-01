@@ -3,16 +3,7 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator"
 
 
 @InputType()
-export class RegisterDto {
-    @Field()
-    @IsNotEmpty({message: 'Name is required.'})
-    @IsString({message: "Name must needed to be one string."})
-    name:string;
-
-    @Field()
-    @IsNotEmpty({message: 'Password is required.'})
-    @MinLength(8,{message: "Password must be at least 8 characters"})
-    password:string
+export class AttachGmailDto {
 
     @Field()
     @IsNotEmpty({message: 'Email is required.'})
@@ -21,11 +12,8 @@ export class RegisterDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:number;
+    phone_number:string;
 
-    // @Field()
-    // @IsNotEmpty({message: 'Address is required.'})
-    // address:string;
 }
 
 @InputType()
@@ -99,7 +87,7 @@ export class ResetPasswordDto {
 }
 
 @InputType()
-export class VerificationDto {
+export class VerificationStepOneDto {
     @Field()
     @IsNotEmpty({message: 'Personal Id is required.'})
     personalId: string
@@ -108,11 +96,28 @@ export class VerificationDto {
     @IsNotEmpty({message: 'Phone Number is required.'})
     phone_number: string
 
-    @Field(() => [String])
-    @IsNotEmpty({message: 'Bank Account is required.'})
-    bankAccount:  string[]
+    @Field()
+    @IsNotEmpty({message: 'Personal card image url is required.'})
+    personalCardImageUrl:  string
 }
 
+@InputType()
+export class VerificationStepTwoDto {
+
+    @Field()
+    @IsNotEmpty({message: 'Phone Number is required.'})
+    phone_number: string
+    @Field()
+    @IsNotEmpty({message: 'Personal image url is required.'})
+    userImageUrl:  string
+
+
+    @Field()
+    @IsNotEmpty({message: 'Verify image url is required.'})
+    userVerifyTextImageUrl:  string
+}
 export class VerifyDto {
-
+ 
+    
 }
+

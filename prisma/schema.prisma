@@ -50,36 +50,71 @@ model InteractedUser {
 }
 
 model Account {
-  id           String        @id @default(uuid()) @map("_id")
+  id           String         @id @default(uuid()) @map("_id")
   name         String
   lastName     String
   password     String
-  phone_number String        @unique
-  email        String?
+  phone_number String         @unique
+  email        String?        @unique
+  orders       Order[]
   verification Verification?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  wallet       AccountWallet?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model Verification {
-  id          String   @id @default(uuid()) @map("_id")
-  personalId  String   @unique
-  bankAccount String[] @unique
-  user        Account  @relation(fields: [userId], references: [id])
-  userId      String   @unique
-  userLevel   Int
-  address     String?
+  id           String        @id @default(uuid()) @map("_id")
+  personalId   String        @unique
+  bankAccount  BankAccount[]
+  user         Account       @relation(fields: [phone_number], references: [phone_number])
+  phone_number String        @unique
+  userLevel    Int
+  address      String?
+}
+
+model AccountWallet {
+  id                    Int     @id @default(autoincrement())
+  tomanBalance          Int
+  phone_number          String  @unique
+  totalWithdrawalAmount Int
+  totalDepositAmount    Int
+  user                  Account @relation(fields: [phone_number], references: [phone_number])
+}
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  fromAsset    String
+  toAsset      String
+  fromAmount   Int
+  toAmount     Int
+  orderedAt    DateTime @default(now())
+  status       String
+  phone_number String   @unique
+  user         Account  @relation(fields: [phone_number], references: [phone_number])
 }
 
 model PendingVerification {
-  id           Int      @id @default(autoincrement())
-  personalId   String   @unique
-  bankAccount  String[] @unique
-  phone_number String   @unique
+  id                     Int     @id @default(autoincrement())
+  personalId             String  @unique
+  personalCardImageUrl   String  @unique
+  userImageUrl           String?
+  userVerifyTextImageUrl String?
+  phone_number           String  @unique
+  isReadyToCheck         Boolean
+}
+
+model BankAccount {
+  id           Int           @id @default(autoincrement())
+  phone_number String        @unique
+  shabaNumber  String        @unique
+  cardNumber   String        @unique
+  verification Verification? @relation(fields: [phone_number], references: [phone_number])
 }
 
 model PendingNewBankAccountRequest {
-  id             Int    @id @default(autoincrement())
-  personalId     String @unique
-  newBankAccount String @unique
+  id           Int    @id @default(autoincrement())
+  phone_number String @unique
+  cardNumber   String @unique
+  shabaNumber  String @unique
 }

@@ -6,13 +6,17 @@ import {
   // ActivationDto,
   ForgotPasswordDto,
   LoginDto,
-  RegisterDto,
+
   RegisterUserDto,
   ResetPasswordDto,
-  VerificationDto,
+
+  VerificationStepOneDto,
+
+  VerificationStepTwoDto,
+
   VerifyMessageDto,
 } from './dto/user.dto';
-import { User,Account } from './entities/user.entity';
+import { User,Account, PendingVerificationData } from './entities/user.entity';
 import { AuthGuard } from './guards/auth.guard';
 import {
   ActivationResponse,
@@ -57,24 +61,24 @@ export class UsersResolver {
       throw new BadRequestException(' Please fill all the fields');
     }
 
-    const { activation_token,activationCode,response } = await this.usersService.registerUser(
+    const { activation_token,activationCode} = await this.usersService.RegisterUser(
       registerUserDto,
-      context.res,
+      // context.res,
     );
     console.log(activation_token,activationCode);
     if (!activation_token || !activationCode) {
       throw new Error('Activation tokens not provided');
     }
     
-    return { activation_token,activationCode};
+    return {activation_token, activationCode};
   }
 
   @Mutation(()=> RegistrationConfirmResponse)
   async verifyRegistrationMessage(
     @Args('verifyMessageDto')verifyMessageDto: VerifyMessageDto,
-    @Context() context: {res: Response},
+    // @Context() context: {res: Response},
   ):Promise <RegistrationConfirmResponse>{
-    const {user} = await this.usersService.verifyRegistrationMessage(verifyMessageDto,context.res)
+    const {user} = await this.usersService.VerifyRegistrationMessage(verifyMessageDto)
     return {user}
   }
 
@@ -85,7 +89,7 @@ export class UsersResolver {
   ): Promise <boolean>{
     console.log("number entered");
     
-    return await this.usersService.isUserRegistered(phone_number)
+    return await this.usersService.IsUserRegistered(phone_number)
   }
 
   // @Mutation(() => ActivationResponse)
@@ -105,24 +109,32 @@ export class UsersResolver {
   }
 
   @Mutation(() => LoginResponse)
-  async ConfirmLoginByMessage(
+  async VerifyLogin(
     @Args('verifyMessageDto') verifyMessageDto: VerifyMessageDto,
   ): Promise<LoginResponse> {
-    return this.usersService.ConfirmLoginByMessage(verifyMessageDto)
+    return this.usersService.VerifyLogin(verifyMessageDto)
   }
 
   @Query(() => LoginResponse)
   @UseGuards(AuthGuard)
   async getLoggedInUser(@Context() context: { req: Request }) {
-    return await this.usersService.getLoggedInUser(context.req);
+    return await this.usersService.GetLoggedInUser(context.req);
   }
+
+  // @Mutation(() => VerifyRequestResponse)
+  // async AccountVerificationRequest(
+  //   @Args('verificationDto') verificationDto: VerificationDto,
+  //   @Context() context: {res: Response},
+  // ): Promise<VerifyRequestResponse> {
+  //   return await this.usersService.AccountVerificationRequest(verificationDto)
+  // }
 
   @Mutation(() => ForgotPasswordResponse)
   async forgotPassword(
     @Args('forgotPasswordDto') forgotPasswordDto: ForgotPasswordDto,
     // @Context() context: {res: Response}
   ): Promise<ForgotPasswordResponse> {
-    return await this.usersService.forgotPassword(forgotPasswordDto);
+    return await this.usersService.ForgotPassword(forgotPasswordDto);
   }
 
   @Mutation(() => ResetPasswordResponse)
@@ -130,7 +142,7 @@ export class UsersResolver {
     @Args('resetPasswordDto') resetPasswordDto: ResetPasswordDto,
     // @Context() context: {res: Response}
   ): Promise<ResetPasswordResponse> {
-    return await this.usersService.resetPassword(resetPasswordDto);
+    return await this.usersService.ResetPassword(resetPasswordDto);
   }
 
   @Query(() => LogoutResposne)
@@ -139,9 +151,9 @@ export class UsersResolver {
     return await this.usersService.LogOut(context.req);
   }
 
-  @Query(() => [User])
+  @Query(() => [Account])
   async getUsers() {
-    return this.usersService.getUsers();
+    return this.usersService.GetUsers();
   }
 
 
@@ -152,6 +164,31 @@ export class UsersResolver {
   ): Promise<SendMessageResponse> {
     await this.usersService.sendMessage(phoneNumber,"1234");
     return { message: 'Message sent successfully' };
+  }
+
+
+  @Mutation(() => PendingVerificationData)
+  async verifyStepOne(
+    @Args('verificationStepOneDto') verificationStepOneDto:VerificationStepOneDto
+  ): Promise<PendingVerificationData>{
+    console.log("step1 triggered");
+    
+    return await this.usersService.VerifyAccountStepOne(verificationStepOneDto)
+  }
+
+
+  @Mutation(() => PendingVerificationData)
+  async verifyStepTwo(
+    @Args('verificationStepTwoDto') verificationStepTwoDto:VerificationStepTwoDto
+  ): Promise<PendingVerificationData>{
+    return await this.usersService.VerifyAccountStepTwo(verificationStepTwoDto)
+  }
+
+  @Mutation(() => PendingVerificationData)
+  async verificationStatus(
+    @Args('verificationStepTwoDto') phone_number:string
+  ): Promise<PendingVerificationData | null>{
+    return await this.usersService.getVerificationStatus(phone_number)
   }
 
 

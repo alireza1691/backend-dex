@@ -50,17 +50,30 @@ export class User {
 }
 
 @ObjectType()
-export class VerificationData{
-  @Field(() => [String])
-  bankAccount: string[];
+export class VerificationData {
+  @Field()
+  id: string;
 
   @Field()
   personalId: string;
 
+  @Field(() => BankAccount, { nullable: true })
+  bankAccount: BankAccount[] | null;
+
+  // @Field()
+  // user: Account;
+
   @Field()
-  level: number;
+  phone_number: string;
+
+  @Field()
+  userLevel: number;
+
+  @Field()
+  address?: string;
 
 }
+
 
 @ObjectType()
 export class Account {
@@ -80,7 +93,7 @@ export class Account {
   password: string;
 
   @Field(() => VerificationData, { nullable: true })
-  verified?: VerificationData | null;
+  verification?: VerificationData | null;
 
 
   @Field()
@@ -92,4 +105,51 @@ export class Account {
   @Field()
   updatedAt: Date;
 }
+
+
+@ObjectType()
+export class PendingVerificationData {
+  @Field()
+  id: number;
+
+  @Field()
+  personalId: string;
+
+  @Field()
+  personalCardImageUrl: string;
+
+  @Field()
+  userImageUrl?: string;
+
+  @Field()
+  userVerifyTextImageUrl?: string;
+
+  @Field()
+  phone_number: string;
+  @Field()
+  isReadyToCheck: boolean;
+
+}
+
+
+@ObjectType()
+export class BankAccount {
+  @Field()
+  id: string;
+
+  @Field()
+  phone_number: string;
+
+  @Field()
+  shabaNumber: string;
+
+  @Field()
+  cardNumber: string;
+
+
+  @Field(() => VerificationData, { nullable: true })
+  verification?: VerificationData | null;
+
+}
+
 

@@ -52,8 +52,8 @@ export class ActivationResponse {
 
 @ObjectType()
 export class LoginResponse {
-  @Field(() => User, { nullable: true })
-  user?: User | any;
+  @Field(() => Account, { nullable: true })
+  user?: Account | any;
 
   @Field({ nullable: true })
   accessToken?: string;
@@ -91,6 +91,10 @@ export class ResetPasswordResponse {
 
 @ObjectType()
 export class VerifyRequestResponse {
+
+  @Field()
+  id: number
+
   @Field(() => [String])
   bankAccount: string[]
 
@@ -98,7 +102,7 @@ export class VerifyRequestResponse {
   personalId: string
 
   @Field()
-  phone_number: number
+  phone_number: string
 
 
   @Field(() => ErrorType, { nullable: true })

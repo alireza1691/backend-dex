@@ -58,7 +58,7 @@ export class AuthGuard implements CanActivate {
       if (!decoded) {
         throw new UnauthorizedException('Invalid refresh token!');
       }
-      const user = await this.prisma.user.findUnique({
+      const user = await this.prisma.account.findUnique({
         where: {
           id: decoded.id,
         },
