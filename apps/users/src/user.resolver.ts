@@ -186,8 +186,8 @@ export class UsersResolver {
 
   @Mutation(() => PendingVerificationData)
   async verificationStatus(
-    @Args('verificationStepTwoDto') phone_number:string
-  ): Promise<PendingVerificationData | null>{
+    @Args('phone_number') phone_number:string
+  ): Promise<PendingVerificationData>{
     return await this.usersService.getVerificationStatus(phone_number)
   }
 
