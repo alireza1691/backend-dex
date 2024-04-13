@@ -1,7 +1,7 @@
 import {InputType, Field} from "@nestjs/graphql"
 import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator"
 
-type WalletAsset = "Toman" | "Paypal" | "Visa"
+type WalletAsset = "Toman" | "Paypal" | "Visa" 
 type VisaPayAsset = "Toman" | "Paypal"
 type PaypalPayAsset = "Toman" | "Visa"
 @InputType()

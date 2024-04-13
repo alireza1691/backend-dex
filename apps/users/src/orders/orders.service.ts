@@ -20,7 +20,14 @@ import { KavenegarService } from '@fraybabak/kavenegar_nest';
 
 import axios from 'axios';
 import { get } from 'http';
-import { BuyTokenOrderDto, BuyVisaDto, ExecuteFeeDto, ReceiveVisaDto, SellTokenOrderDto, SendVisaDto } from './dto/orders.dto';
+import {
+  BuyTokenOrderDto,
+  BuyVisaDto,
+  ExecuteFeeDto,
+  ReceiveVisaDto,
+  SellTokenOrderDto,
+  SendVisaDto,
+} from './dto/orders.dto';
 
 // const Kavenegar = require('kavenegar');
 // const urlencode = require('urlencode');
@@ -101,40 +108,60 @@ export class UsersService {
         throw new BadRequestException('Insufficient Paypal balance');
       }
     }
-    return {userWallet}
+    return { userWallet };
   }
 
-  async BuyVisa(buyVisaDto: BuyVisaDto){
-    const {paidAmount,payMethod,phoneNumber,expectedReceiveAmount,feeAmount} = buyVisaDto
-    const {userWallet} = await this.useBalance(phoneNumber, paidAmount, payMethod);
-    await this.executefFee({amount:feeAmount,asset:payMethod,destinationAsset:"Visa",phoneNumber})
+  async BuyVisa(buyVisaDto: BuyVisaDto) {
+    const {
+      paidAmount,
+      payMethod,
+      phoneNumber,
+      expectedReceiveAmount,
+      feeAmount,
+    } = buyVisaDto;
+    const { userWallet } = await this.useBalance(
+      phoneNumber,
+      paidAmount,
+      payMethod,
+    );
+    await this.executefFee({
+      amount: feeAmount,
+      asset: payMethod,
+      destinationAsset: 'Visa',
+      phoneNumber,
+    });
     await this.prisma.accountWallet.update({
-        where:{phoneNumber},
-        data:{
-            visaBalance: userWallet.visaBalance + expectedReceiveAmount,
-        }
-    })
+      where: { phoneNumber },
+      data: {
+        visaBalance: userWallet.visaBalance + expectedReceiveAmount,
+      },
+    });
   }
-  async SendVisaReq(sendVisaDto: SendVisaDto){
-    const {amount,expectedReceiveAmount,receiverAddress,phoneNumber} = sendVisaDto
-    const  userWallet = await this.getWallet(phoneNumber)
-    if ( userWallet.visaBalance < amount) {
-     throw new BadRequestException("InsufiicientBalance")   
+  async SendVisaReq(sendVisaDto: SendVisaDto) {
+    const { amount, expectedReceiveAmount, receiverAddress, phoneNumber } =
+      sendVisaDto;
+    const userWallet = await this.getWallet(phoneNumber);
+    if (userWallet.visaBalance < amount) {
+      throw new BadRequestException('InsufiicientBalance');
     }
-    await this.executefFee({amount: amount-expectedReceiveAmount,asset:"Visa",destinationAsset:receiverAddress,phoneNumber})
+    await this.executefFee({
+      amount: amount - expectedReceiveAmount,
+      asset: 'Visa',
+      destinationAsset: receiverAddress,
+      phoneNumber,
+    });
     await this.prisma.sendVisaRequest.create({
-        data:{
-            amountInDollar:expectedReceiveAmount,
-            receiverAddress,
-            userPhoneNumber:phoneNumber,
-            status:"Pending"
-        }
-    })
+      data: {
+        amountInDollar: expectedReceiveAmount,
+        receiverAddress,
+        userPhoneNumber: phoneNumber,
+        status: 'Pending',
+      },
+    });
   }
 
-  async ReceiveVisaReq(receiveVisaDto:ReceiveVisaDto){
-    const {phoneNumber,expectedReceiveAmount} = receiveVisaDto
-
+  async ReceiveVisaReq(receiveVisaDto: ReceiveVisaDto) {
+    const { phoneNumber, expectedReceiveAmount } = receiveVisaDto;
   }
 
   async BuyTokenOrder(buyOrderDto: BuyTokenOrderDto) {
@@ -166,32 +193,63 @@ export class UsersService {
 
     return req;
   }
-  async sellTokenOrderByConnection(sellTokenOrderDto:SellTokenOrderDto) {
-    const {expectedReceiveAmount,receiverAddress,receiveAsset,tokenAmount,tokenAddress,phoneNumber,tokenPriceInDollar,senderAddress } = sellTokenOrderDto
+  async sellTokenOrderByConnection(sellTokenOrderDto: SellTokenOrderDto) {
+    const {
+      expectedReceiveAmount,
+      receiverAddress,
+      receiveAsset,
+      tokenAmount,
+      tokenAddress,
+      phoneNumber,
+      tokenPriceInDollar,
+      senderAddress,
+    } = sellTokenOrderDto;
     const token = await this.getToken(tokenAddress);
-    const wallet = await this.getWallet(phoneNumber)
+    // const wallet = await this.getWallet(phoneNumber);
     const order = await this.prisma.sellCryptoOrder.create({
-        data:{
-            tokenName:token.name,
-            tokenAddress,
-            paidAmount:tokenAmount,
-            payMethod:receiveAsset,
-            receiverAddress,
-            outAmount:expectedReceiveAmount,
-            phoneNumber,
-            status:"Confirmed",
-            tokenPriceInDollar,
-            senderAddress
-
-        }
-    })
-
-
+      data: {
+        tokenName: token.name,
+        tokenAddress,
+        paidAmount: tokenAmount,
+        payMethod: receiveAsset,
+        receiverAddress,
+        outAmount: expectedReceiveAmount,
+        phoneNumber,
+        status: 'Sending',
+        tokenPriceInDollar,
+        senderAddress,
+      },
+    });
+    return order
   }
-  async sellTokenOrderByTransfer(sellTokenOrderDto:SellTokenOrderDto) {
-    const {expectedReceiveAmount,receiverAddress,receiveAsset,tokenAmount,tokenAddress } = sellTokenOrderDto
-
-
+  async sellTokenOrderByTransfer(sellTokenOrderDto: SellTokenOrderDto) {
+    const {
+      expectedReceiveAmount,
+      receiverAddress,
+      receiveAsset,
+      tokenAmount,
+      tokenAddress,
+      tokenPriceInDollar,
+      senderAddress,
+      phoneNumber
+    } = sellTokenOrderDto;
+    const token = await this.getToken(tokenAddress);
+    // const wallet = await this.getWallet(phoneNumber);
+    const order = await this.prisma.sellCryptoOrder.create({
+      data: {
+        tokenName: token.name,
+        tokenAddress,
+        paidAmount: tokenAmount,
+        payMethod: receiveAsset,
+        receiverAddress,
+        outAmount: expectedReceiveAmount,
+        phoneNumber,
+        status: 'Pending',
+        tokenPriceInDollar,
+        senderAddress,
+      },
+    });
+    return order
   }
 
   async getToken(contractAddress: string) {
@@ -217,60 +275,56 @@ export class UsersService {
     return userWallet;
   }
 
-  async getOrders(phoneNumber: string){}
+  async getOrders(phoneNumber: string) {}
 
-  async getAssetPrices(){
+  async getAssetPrices() {
     const prices = {
-        thether: 65,
-        visa:64,
-        paypal:62
-    }
-    return prices
+      thether: 65,
+      visa: 64,
+      paypal: 62,
+    };
+    return prices;
   }
 
-  async executefFee(executefFeeDto: ExecuteFeeDto){
-    const {amount,asset,destinationAsset,phoneNumber} = executefFeeDto
+  async executefFee(executefFeeDto: ExecuteFeeDto) {
+    const { amount, asset, destinationAsset, phoneNumber } = executefFeeDto;
     const req = await this.prisma.orderFee.create({
-        data:{
-            amount,
-            asset,
-            destinationAsset,
-            userPhoneNumber:phoneNumber
-        }
-    })
-    return req
+      data: {
+        amount,
+        asset,
+        destinationAsset,
+        userPhoneNumber: phoneNumber,
+      },
+    });
+    return req;
   }
 
-  async getAllSendVisaRequests(){
+  async getAllSendVisaRequests() {
     const pendingReqs = await this.prisma.sendVisaRequest.findMany({
-        where:{
-            status:"Pending"
-        }
-    })
+      where: {
+        status: 'Pending',
+      },
+    });
     const confirmedReqs = await this.prisma.sendVisaRequest.findMany({
-        where:{
-            status:"Cofirmed"
-        }
-    })
+      where: {
+        status: 'Cofirmed',
+      },
+    });
     const rejectededReqs = await this.prisma.sendVisaRequest.findMany({
-        where:{
-            status:"Rejected"
-        }
-    })
+      where: {
+        status: 'Rejected',
+      },
+    });
     const sendingReqs = await this.prisma.sendVisaRequest.findMany({
-        where:{
-            status:"Sending"
-        }
-    })
+      where: {
+        status: 'Sending',
+      },
+    });
     return {
-        pendingReqs,
-        confirmedReqs,
-        rejectededReqs,
-        sendingReqs
-    }
+      pendingReqs,
+      confirmedReqs,
+      rejectededReqs,
+      sendingReqs,
+    };
   }
-
-
 }
-
-
