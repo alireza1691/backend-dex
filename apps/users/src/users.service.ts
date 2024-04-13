@@ -29,13 +29,13 @@ interface UserData {
   name: string;
   email: string;
   password: string;
-  phone_number: string;
+  phoneNumber: string;
 }
 interface AccountData {
   name: string;
   lastName: string;
   password: string;
-  phone_number: string;
+  phoneNumber: string;
 }
 
 @Injectable()
@@ -48,21 +48,21 @@ export class UsersService {
     private readonly sender: KavenegarService,
   ) {}
 
-  async IsUserRegistered(phone_number: string) {
+  async IsUserRegistered(phoneNumber: string) {
     const isUserRegistered = await this.prisma.account.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     const isNumberExist = await this.prisma.interactedUser.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!isNumberExist) {
       await this.prisma.interactedUser.create({
         data: {
-          phone_number,
+          phoneNumber,
         },
       });
     }
@@ -70,10 +70,10 @@ export class UsersService {
   }
 
   async RegisterUser(registerUserDto: RegisterUserDto) {
-    const { name, lastName, password, phone_number } = registerUserDto;
+    const { name, lastName, password, phoneNumber } = registerUserDto;
     const IsNumberExist = await this.prisma.account.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (IsNumberExist) {
@@ -87,14 +87,14 @@ export class UsersService {
       name,
       lastName,
       password: hashedPassword,
-      phone_number,
+      phoneNumber,
     };
 
     const activationToken = await this.createActivationToken(user);
     const activationCode = activationToken.activationCode;
     const activation_token = activationToken.token;
 
-    // await this.sendMessage(phone_number,activationCode)
+    // await this.sendMessage(phoneNumber,activationCode)
     return { activation_token, activationCode };
   }
 
@@ -111,10 +111,10 @@ export class UsersService {
       newUser.activationCode == activationCode ? 'matched' : 'deos not match',
     );
 
-    const { name, lastName, password, phone_number } = newUser.user;
+    const { name, lastName, password, phoneNumber } = newUser.user;
     const existUser = await this.prisma.account.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (existUser) {
@@ -126,7 +126,7 @@ export class UsersService {
       data: {
         name,
         lastName,
-        phone_number,
+        phoneNumber,
         password,
       },
     });
@@ -135,10 +135,10 @@ export class UsersService {
   }
 
   async Login(loginDto: LoginDto, response: Response) {
-    const { phone_number, password } = loginDto;
+    const { phoneNumber, password } = loginDto;
     const user = await this.prisma.account.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     console.log(password, user.password);
@@ -148,7 +148,7 @@ export class UsersService {
       const activationCode = activationToken.activationCode;
       const activation_token = activationToken.token;
 
-      // await this.sendMessage(phone_number,activationCode)
+      // await this.sendMessage(phoneNumber,activationCode)
 
       // const tokenSender = new TokenSender(this.configService, this.jwtService);
       // return tokenSender.sendLoginToken(user);
@@ -176,7 +176,7 @@ export class UsersService {
       const tokenSender = new TokenSender(this.configService, this.jwtService);
       const account = await this.prisma.account.findUnique({
         where: {
-          phone_number: userPhoneNumber,
+          phoneNumber: userPhoneNumber,
         },
       });
       return tokenSender.sendLoginToken(account);
@@ -192,7 +192,7 @@ export class UsersService {
       // throw new BadRequestException('Invalid activation code');
     }
 
-    // const { name, lastName, password, phone_number } = newUser.user;
+    // const { name, lastName, password, phoneNumber } = newUser.user;
   }
 
   async generateForgotPasswordLink(user: User) {
@@ -277,12 +277,12 @@ export class UsersService {
   }
 
   async VerifyAccountStepOne(verificationStepOneDto: VerificationStepOneDto) {
-    const { personalId, personalCardImageUrl, phone_number } =
+    const { personalId, personalCardImageUrl, phoneNumber } =
       verificationStepOneDto;
     const pendingVerification =
       await this.prisma.pendingVerification.findUnique({
         where: {
-          phone_number,
+          phoneNumber,
         },
       });
 
@@ -296,7 +296,7 @@ export class UsersService {
       await this.prisma.pendingVerification.create({
         data: {
           personalId,
-          phone_number,
+          phoneNumber,
           personalCardImageUrl,
           isReadyToCheck: false,
         },
@@ -305,12 +305,12 @@ export class UsersService {
   }
 
   async VerifyAccountStepTwo(verificationStepTwoDto: VerificationStepTwoDto) {
-    const { userImageUrl, phone_number, userVerifyTextImageUrl } =
+    const { userImageUrl, phoneNumber, userVerifyTextImageUrl } =
       verificationStepTwoDto;
     const pendingVerification =
       await this.prisma.pendingVerification.findUnique({
         where: {
-          phone_number,
+          phoneNumber,
         },
       });
 
@@ -322,7 +322,7 @@ export class UsersService {
 
     const verificationData = this.prisma.pendingVerification.update({
       where: {
-        phone_number,
+        phoneNumber,
       },
       data: {
         userVerifyTextImageUrl,
@@ -335,14 +335,14 @@ export class UsersService {
   }
 
   // async AddNewBankAccountRequest(
-  //   phone_number: string,
+  //   phoneNumber: string,
   //   cardNumber: string,
   //   shabaNumber: string,
   // ) {
   //   const existedPendingReq =
   //     await this.prisma.pendingNewBankAccountRequest.findUnique({
   //       where: {
-  //         phone_number,
+  //         phoneNumber,
   //       },
   //     });
   //   if (existedPendingReq) {
@@ -350,7 +350,7 @@ export class UsersService {
   //   }
   //   const verification = await this.prisma.verification.findUnique({
   //     where: {
-  //       phone_number,
+  //       phoneNumber,
   //     },
   //   });
   //   if (!verification) {
@@ -360,7 +360,7 @@ export class UsersService {
   //   }
   //   const req = await this.prisma.pendingNewBankAccountRequest.create({
   //     data: {
-  //       phone_number,
+  //       phoneNumber,
   //       shabaNumber,
   //       cardNumber,
   //     },
@@ -398,11 +398,11 @@ export class UsersService {
         secret: this.configService.get<string>('ACTIVATION_SECRET'),
       } as JwtVerifyOptions) as { user: AccountData; activationCode: string };
     const isMessageVerified = account.activationCode == activationCode;
-    const userPhoneNumber = account.user.phone_number || '';
+    const userPhoneNumber = account.user.phoneNumber || '';
     return { isMessageVerified, userPhoneNumber };
   }
 
-  async sendMessage(phone_number: string, activation_code: string) {
+  async sendMessage(phoneNumber: string, activation_code: string) {
     // const api = Kavenegar.KavenegarApi({
     //   apikey:
     //     '5675342B5473762B7A756262526B2F686D38784C424F71644E426D582B466B6E39316447624B75462B57633D', // Replace {Your API Key} with your actual API key
@@ -435,13 +435,13 @@ export class UsersService {
       message: 'وب سرویس تخصصی کاوه نگار',
       // message: encodedMessage,
       sender: '10008663',
-      receptor: phone_number,
+      receptor: phoneNumber,
     });
     console.log('sended');
   }
 
   async AttachGmail(registerDto: AttachGmailDto) {
-    const { email, phone_number } = registerDto;
+    const { email, phoneNumber } = registerDto;
     const IsEmailExist = await this.prisma.user.findUnique({
       where: {
         email,
@@ -453,7 +453,7 @@ export class UsersService {
 
     const isUserExist = await this.prisma.account.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!isUserExist) {
@@ -466,7 +466,7 @@ export class UsersService {
       name: isUserExist.name,
       email,
       password: isUserExist.password,
-      phone_number,
+      phoneNumber,
       // address
     };
 
@@ -494,10 +494,10 @@ export class UsersService {
       throw new BadRequestException('Invalid activation code');
     }
 
-    const { email, phone_number } = relevantUser.user;
+    const { email, phoneNumber } = relevantUser.user;
     // const existUser = await this.prisma.account.findUnique({
     //   where: {
-    //     phone_number,
+    //     phoneNumber,
     //   },
     // });
     // if (existUser.email) {
@@ -505,7 +505,7 @@ export class UsersService {
     // }
 
     const user = await this.prisma.account.update({
-      where: { phone_number },
+      where: { phoneNumber },
       data: {
         email,
       },
@@ -514,11 +514,11 @@ export class UsersService {
     return { user };
   }
 
-  async getVerificationStatus(phone_number: string) {
+  async getVerificationStatus(phoneNumber: string) {
     let req: PendingVerificationData =
       await this.prisma.pendingVerification.findUnique({
         where: {
-          phone_number,
+          phoneNumber,
         },
       });
 
@@ -527,7 +527,7 @@ export class UsersService {
         id: null,
         personalId: null,
         personalCardImageUrl: null,
-        phone_number: null,
+        phoneNumber: null,
         isReadyToCheck: false,
       };
     }

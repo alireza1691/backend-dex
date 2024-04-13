@@ -21,32 +21,32 @@ model Avatars {
 }
 
 model User {
-  id           String   @id @default(uuid()) @map("_id")
-  name         String
-  email        String   @unique
-  phone_number Float    @unique
-  address      String?
-  password     String
-  avatar       Avatars?
-  role         Role     @default(User)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(uuid()) @map("_id")
+  name        String
+  email       String   @unique
+  phoneNumber Float    @unique
+  address     String?
+  password    String
+  avatar      Avatars?
+  role        Role     @default(User)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model NonVerifiedUser {
-  name         String
-  lastName     String
-  password     String
-  phone_number Float    @unique
-  email        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  name        String
+  lastName    String
+  password    String
+  phoneNumber Float    @unique
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model InteractedUser {
-  id           Int      @id @default(autoincrement())
-  phone_number String   @unique
-  createdAt    DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  phoneNumber String   @unique
+  createdAt   DateTime @default(now())
 }
 
 model Account {
@@ -54,7 +54,7 @@ model Account {
   name         String
   lastName     String
   password     String
-  phone_number String         @unique
+  phoneNumber  String         @unique
   email        String?        @unique
   orders       Order[]
   verification Verification?
@@ -64,34 +64,25 @@ model Account {
 }
 
 model Verification {
-  id           String        @id @default(uuid()) @map("_id")
-  personalId   String        @unique
-  bankAccount  BankAccount[]
-  user         Account       @relation(fields: [phone_number], references: [phone_number])
-  phone_number String        @unique
-  userLevel    Int
-  address      String?
+  id          String        @id @default(uuid()) @map("_id")
+  personalId  String        @unique
+  bankAccount BankAccount[]
+  user        Account       @relation(fields: [phoneNumber], references: [phoneNumber])
+  phoneNumber String        @unique
+  userLevel   Int
+  address     String?
 }
 
 model AccountWallet {
-  id                    Int     @id @default(autoincrement())
-  tomanBalance          Int
-  phone_number          String  @unique
-  totalWithdrawalAmount Int
-  totalDepositAmount    Int
-  user                  Account @relation(fields: [phone_number], references: [phone_number])
-}
-
-model Order {
-  id           Int      @id @default(autoincrement())
-  fromAsset    String
-  toAsset      String
-  fromAmount   Int
-  toAmount     Int
-  orderedAt    DateTime @default(now())
-  status       String
-  phone_number String   @unique
-  user         Account  @relation(fields: [phone_number], references: [phone_number])
+  id                     Int     @id @default(autoincrement())
+  abstractAccountAddress String?
+  tomanBalance           Int
+  paypalBalance          Int
+  visaBalance            Int
+  phoneNumber            String  @unique
+  totalWithdrawalAmount  Int
+  totalDepositAmount     Int
+  user                   Account @relation(fields: [phoneNumber], references: [phoneNumber])
 }
 
 model PendingVerification {
@@ -100,21 +91,97 @@ model PendingVerification {
   personalCardImageUrl   String  @unique
   userImageUrl           String?
   userVerifyTextImageUrl String?
-  phone_number           String  @unique
+  phoneNumber            String  @unique
   isReadyToCheck         Boolean
 }
 
 model BankAccount {
   id           Int           @id @default(autoincrement())
-  phone_number String        @unique
+  phoneNumber  String        @unique
   shabaNumber  String        @unique
   cardNumber   String        @unique
-  verification Verification? @relation(fields: [phone_number], references: [phone_number])
+  verification Verification? @relation(fields: [phoneNumber], references: [phoneNumber])
 }
 
 model PendingNewBankAccountRequest {
-  id           Int    @id @default(autoincrement())
-  phone_number String @unique
-  cardNumber   String @unique
-  shabaNumber  String @unique
+  id          Int    @id @default(autoincrement())
+  phoneNumber String @unique
+  cardNumber  String @unique
+  shabaNumber String @unique
+}
+
+model SupportedToken {
+  id              Int    @id @default(autoincrement())
+  name            String
+  symbol          String
+  chain           String
+  contractAddress String @unique
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  fromAsset   String
+  toAsset     String
+  fromAmount  Int
+  toAmount    Int
+  orderedAt   DateTime @default(now())
+  status      String
+  phoneNumber String   @unique
+  user        Account  @relation(fields: [phoneNumber], references: [phoneNumber])
+}
+
+model BuyCryptoOrder {
+  id                 Int      @id @default(autoincrement())
+  tokenName          String
+  tokenAddress       String   @unique
+  tokenPriceInDollar Int
+  payMethod          String
+  paidAmount         Int
+  outAmount          Int
+  orderedAt          DateTime @default(now())
+  status             String
+  phoneNumber        String   @unique
+  receiverAddress    String
+}
+
+model SellCryptoOrder {
+  id                 Int      @id @default(autoincrement())
+  tokenName          String
+  tokenAddress       String   @unique
+  tokenPriceInDollar Int
+  payMethod          String
+  paidAmount         Int
+  outAmount          Int
+  orderedAt          DateTime @default(now())
+  status             String
+  phoneNumber        String   @unique
+  senderAddress      String
+  receiverAddress    String
+}
+
+model OrderFee {
+  id               Int      @id @default(autoincrement())
+  userPhoneNumber  String   @unique
+  asset            String
+  amount           Int
+  orderedAt        DateTime @default(now())
+  destinationAsset String
+}
+
+model SendVisaRequest {
+  id              Int      @id @default(autoincrement())
+  amountInDollar  Int
+  userPhoneNumber String   @unique
+  receiverAddress String
+  status          String
+  orderedAt       DateTime @default(now())
+}
+
+model ReceiveVisaRequest {
+  id                     Int      @id @default(autoincrement())
+  expectedAmountInDollar Int
+  userPhoneNumber        String   @unique
+  receiverAddress        String
+  status                 String
+  orderedAt              DateTime @default(now())
 }

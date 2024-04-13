@@ -12,7 +12,7 @@ export class AttachGmailDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:string;
+    phoneNumber:string;
 
 }
 
@@ -37,7 +37,7 @@ export class RegisterUserDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:string;
+    phoneNumber:string;
 
 }
 
@@ -57,7 +57,7 @@ export class LoginDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number:string;
+    phoneNumber:string;
 
     @Field()
     @IsNotEmpty({message: 'Password is required.'})
@@ -94,7 +94,7 @@ export class VerificationStepOneDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number: string
+    phoneNumber: string
 
     @Field()
     @IsNotEmpty({message: 'Personal card image url is required.'})
@@ -106,7 +106,7 @@ export class VerificationStepTwoDto {
 
     @Field()
     @IsNotEmpty({message: 'Phone Number is required.'})
-    phone_number: string
+    phoneNumber: string
     @Field()
     @IsNotEmpty({message: 'Personal image url is required.'})
     userImageUrl:  string

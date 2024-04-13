@@ -84,12 +84,12 @@ export class UsersResolver {
 
   @Mutation(()=> Boolean)
   async isNumberExist(
-    @Args('phone_number')phone_number: string,
+    @Args('phoneNumber')phoneNumber: string,
     // @Context() context: {res: Response},
   ): Promise <boolean>{
     console.log("number entered");
     
-    return await this.usersService.IsUserRegistered(phone_number)
+    return await this.usersService.IsUserRegistered(phoneNumber)
   }
 
   // @Mutation(() => ActivationResponse)
@@ -186,9 +186,9 @@ export class UsersResolver {
 
   @Mutation(() => PendingVerificationData)
   async verificationStatus(
-    @Args('phone_number') phone_number:string
+    @Args('phoneNumber') phoneNumber:string
   ): Promise<PendingVerificationData>{
-    return await this.usersService.getVerificationStatus(phone_number)
+    return await this.usersService.getVerificationStatus(phoneNumber)
   }
 
 

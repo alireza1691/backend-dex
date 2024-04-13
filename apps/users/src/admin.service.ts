@@ -18,6 +18,7 @@ import { EmailService } from './email/email.service';
 import { TokenSender } from './utils/sendToken';
 import { Account, User } from '@prisma/client';
 import { KavenegarService } from '@fraybabak/kavenegar_nest';
+import { OrderStatusType } from './types/types';
 // const Kavenegar = require('kavenegar');
 // const urlencode = require('urlencode');
 
@@ -25,13 +26,13 @@ interface UserData {
   name: string;
   email: string;
   password: string;
-  phone_number: number;
+  phoneNumber: number;
 }
 interface AccountData {
   name: string;
   lastName: string;
   password: string;
-  phone_number: string;
+  phoneNumber: string;
 }
 
 @Injectable()
@@ -44,16 +45,16 @@ export class AdminService {
     private readonly sender: KavenegarService,
   ) {}
 
-  async rejectStepOneVerification(phone_number: string) {
+  async rejectStepOneVerification(phoneNumber: string) {
     const isVerified = await this.prisma.verification.findUnique({
-      where: { phone_number },
+      where: { phoneNumber },
     });
     if (isVerified) {
       throw new BadRequestException('This phone number has already verified!');
     }
     const existedReq = await this.prisma.pendingVerification.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!existedReq) {
@@ -62,14 +63,14 @@ export class AdminService {
       );
     }
     await this.prisma.pendingVerification.delete({
-      where: { phone_number },
+      where: { phoneNumber },
     });
   }
 
-  async rejectStepTwoVerification(phone_number: string) {
+  async rejectStepTwoVerification(phoneNumber: string) {
     const existedReq = await this.prisma.pendingVerification.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!existedReq) {
@@ -78,7 +79,7 @@ export class AdminService {
       );
     }
     await this.prisma.pendingVerification.update({
-      where: { phone_number },
+      where: { phoneNumber },
       data: {
         isReadyToCheck: false,
         userImageUrl: null,
@@ -87,10 +88,10 @@ export class AdminService {
     });
   }
 
-  async confirmVerification(phone_number: string) {
+  async confirmVerification(phoneNumber: string) {
     const existedReq = await this.prisma.pendingVerification.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!existedReq) {
@@ -104,22 +105,22 @@ export class AdminService {
         personalId: existedReq.personalId,
         userLevel: 1,
         user: {
-          connect: { phone_number }, // Associate with the user by phone number
+          connect: { phoneNumber }, // Associate with the user by phone number
         },
       },
     });
 
     await this.prisma.pendingVerification.delete({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     return verificationData;
   }
-  async confirmBankAccount(phone_number: string) {
+  async confirmBankAccount(phoneNumber: string) {
     const req = await this.prisma.pendingNewBankAccountRequest.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!req) {
@@ -127,7 +128,7 @@ export class AdminService {
     }
     const verification = await this.prisma.verification.findUnique({
       where: {
-        phone_number,
+        phoneNumber,
       },
     });
     if (!verification) {
@@ -141,31 +142,68 @@ export class AdminService {
         cardNumber: req.cardNumber,
         verification: {
           connect: {
-            phone_number,
+            phoneNumber,
           },
         },
       },
     });
 
     await this.prisma.pendingNewBankAccountRequest.delete({
-        where:{phone_number}
+        where:{phoneNumber}
     })
 
     return verifiedBankAccount
   }
-  async rejectBankAccount(phone_number: string) {
+  async rejectBankAccount(phoneNumber: string) {
     const req = await this.prisma.pendingNewBankAccountRequest.findUnique({
         where: {
-          phone_number,
+          phoneNumber,
         },
       });
       if (!req) {
         throw new BadRequestException('Pending request is not existed!');
       }
       await this.prisma.pendingNewBankAccountRequest.delete({
-        where:{phone_number}
+        where:{phoneNumber}
       })
   }
-  async fufillOrder() {}
-  async rejectOrder() {}
+  async confirmBuyTokenOrder(phoneNumber: string) {
+
+  }
+  async rejectBuyTokenOrder() {}
+ 
+  async setBuyTokenOrderStatus(orderId: number,phoneNumber:string,status: OrderStatusType) {
+    const order = await this.prisma.buyCryptoOrder.findUnique({
+      where:{
+        phoneNumber,
+        id:orderId
+      }
+    })
+    if (!order) {
+      throw new BadRequestException("Order not found")
+    }
+    await this.prisma.buyCryptoOrder.update({
+      where: {
+        phoneNumber
+      },
+      data:{status}
+    })
+  }
+  async setBuyVisaOrderStatus(orderId: number,phoneNumber:string,status: OrderStatusType) {
+    const order = await this.prisma.sendVisaRequest.findUnique({
+      where:{
+        userPhoneNumber:phoneNumber,
+        id:orderId
+      }
+    })
+    if (!order) {
+      throw new BadRequestException("Order not found")
+    }
+    await this.prisma.sendVisaRequest.update({
+      where: {
+        userPhoneNumber:phoneNumber
+      },
+      data:{status}
+    })
+  }
 }

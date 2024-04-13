@@ -3,7 +3,6 @@ import { ObjectType, Field } from '@nestjs/graphql';
 import { Account, User } from '../entities/user.entity';
 
 
-
 @ObjectType()
 export class ErrorType {
   @Field()
@@ -102,7 +101,7 @@ export class VerifyRequestResponse {
   personalId: string
 
   @Field()
-  phone_number: string
+  phoneNumber: string
 
 
   @Field(() => ErrorType, { nullable: true })

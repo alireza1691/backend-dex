@@ -40,7 +40,7 @@ export class User {
   address: string;
 
   @Field({ nullable: true })
-  phone_number: number;
+  phoneNumber: number;
 
   @Field()
   createdAt: Date;
@@ -64,7 +64,7 @@ export class VerificationData {
   // user: Account;
 
   @Field()
-  phone_number: string;
+  phoneNumber: string;
 
   @Field()
   userLevel: number;
@@ -97,7 +97,7 @@ export class Account {
 
 
   @Field()
-  phone_number: string;
+  phoneNumber: string;
 
   @Field()
   createdAt: Date;
@@ -125,7 +125,7 @@ export class PendingVerificationData {
   userVerifyTextImageUrl?: string;
 
   @Field()
-  phone_number: string;
+  phoneNumber: string;
   @Field()
   isReadyToCheck: boolean;
 
@@ -138,7 +138,7 @@ export class BankAccount {
   id: string;
 
   @Field()
-  phone_number: string;
+  phoneNumber: string;
 
   @Field()
   shabaNumber: string;

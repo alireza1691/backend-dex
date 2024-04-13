@@ -9,6 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { UsersResolver } from './user.resolver';
 import { EmailModule } from './email/email.module';
 import { KavenegarModule } from '@fraybabak/kavenegar_nest';
+import { OrdersModule } from './orders/orders.module';
 
 
 @Module({
@@ -25,7 +26,8 @@ import { KavenegarModule } from '@fraybabak/kavenegar_nest';
         federation: 2,
       },
     }),
-    EmailModule
+    EmailModule,
+    OrdersModule
   ],
   controllers: [UsersController],
   providers: [UsersService,ConfigService,JwtService,PrismaService,UsersResolver],
