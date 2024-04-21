@@ -39,6 +39,45 @@ export class BuyTokenOrderDto {
 }
 
 @InputType()
+export class BuyStableCoinDto {
+
+
+    @Field()
+    @IsNotEmpty({message: 'Phone Number is required.'})
+    phoneNumber:string;
+
+    @Field()
+    @IsNotEmpty({message: 'receiverAddress is required.'})
+    receiverAddress:string;
+
+    @Field()
+    @IsNotEmpty({message: 'tokenAddress is required.'})
+    tokenAddress:string;
+
+    @Field()
+    @IsNotEmpty({message: 'tokenAddress is required.'})
+    payMethod:WalletAsset;
+
+    @Field()
+    @IsNotEmpty({message: 'tomanPaidAmount is required.'})
+    paidAmount:number;
+
+    @Field()
+    @IsNotEmpty({message: 'feeAmount is required.'})
+    feeAmount:number;
+
+    @Field()
+    @IsNotEmpty({message: 'priceRatio is required.'})
+    priceRatio:number;
+
+    @Field()
+    @IsNotEmpty({message: 'expectedTokenAmount is required.'})
+    expectedTokenAmount:number;
+
+}
+
+
+@InputType()
 export class SellTokenOrderDto {
 
     // model SellCryptoOrder {

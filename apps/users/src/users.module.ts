@@ -10,6 +10,7 @@ import { UsersResolver } from './user.resolver';
 import { EmailModule } from './email/email.module';
 import { KavenegarModule } from '@fraybabak/kavenegar_nest';
 import { OrdersModule } from './orders/orders.module';
+import { OrdersService } from './orders/orders.service';
 
 
 @Module({
@@ -25,9 +26,10 @@ import { OrdersModule } from './orders/orders.module';
       autoSchemaFile: {
         federation: 2,
       },
+      // include:[OrdersModule]
     }),
     EmailModule,
-    OrdersModule
+    // OrdersModule
   ],
   controllers: [UsersController],
   providers: [UsersService,ConfigService,JwtService,PrismaService,UsersResolver],

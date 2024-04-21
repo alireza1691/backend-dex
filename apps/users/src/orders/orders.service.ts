@@ -21,6 +21,7 @@ import { KavenegarService } from '@fraybabak/kavenegar_nest';
 import axios from 'axios';
 import { get } from 'http';
 import {
+  BuyStableCoinDto,
   BuyTokenOrderDto,
   BuyVisaDto,
   ExecuteFeeDto,
@@ -56,7 +57,7 @@ type BuyPayMethod =
   | 'AbstractAccountBalance';
 
 @Injectable()
-export class UsersService {
+export class OrdersService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
@@ -124,7 +125,7 @@ export class UsersService {
       paidAmount,
       payMethod,
     );
-    await this.executefFee({
+    await this.executeFee({
       amount: feeAmount,
       asset: payMethod,
       destinationAsset: 'Visa',
@@ -144,10 +145,10 @@ export class UsersService {
     if (userWallet.visaBalance < amount) {
       throw new BadRequestException('InsufiicientBalance');
     }
-    await this.executefFee({
+    await this.executeFee({
       amount: amount - expectedReceiveAmount,
-      asset: 'Visa',
-      destinationAsset: receiverAddress,
+      asset: 'Toman',
+      destinationAsset: 'Visa',
       phoneNumber,
     });
     await this.prisma.sendVisaRequest.create({
@@ -162,6 +163,39 @@ export class UsersService {
 
   async ReceiveVisaReq(receiveVisaDto: ReceiveVisaDto) {
     const { phoneNumber, expectedReceiveAmount } = receiveVisaDto;
+  }
+
+  async  BuyStableCoin(buyStableCoinDto: BuyStableCoinDto) {
+    const {
+      phoneNumber,
+      expectedTokenAmount,
+      tokenAddress,
+      paidAmount,
+      receiverAddress,
+      payMethod,
+      priceRatio,
+      feeAmount
+    } = buyStableCoinDto;
+    const token = await this.getToken(tokenAddress);
+    await this.useBalance(phoneNumber, paidAmount, payMethod);
+    await this.executeFee({amount: feeAmount , asset: "Toman" ,destinationAsset:"Tether", phoneNumber})
+    const req = await this.prisma.buyStableCoinOrder.create({
+      data: {
+        tokenName: token.name,
+        tokenAddress,
+        priceRatio,
+        paidAmount,
+        network:token.chain,
+        chainId:1,
+        status: 'Pending',
+        receiverAddress,
+        outAmount: expectedTokenAmount,
+        payMethod: 'Toman',
+        phoneNumber,
+        feeAmount
+      },
+    });
+    return req;
   }
 
   async BuyTokenOrder(buyOrderDto: BuyTokenOrderDto) {
@@ -286,7 +320,7 @@ export class UsersService {
     return prices;
   }
 
-  async executefFee(executefFeeDto: ExecuteFeeDto) {
+  async executeFee(executefFeeDto: ExecuteFeeDto) {
     const { amount, asset, destinationAsset, phoneNumber } = executefFeeDto;
     const req = await this.prisma.orderFee.create({
       data: {
@@ -327,4 +361,5 @@ export class UsersService {
       sendingReqs,
     };
   }
+
 }

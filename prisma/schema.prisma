@@ -144,6 +144,40 @@ model BuyCryptoOrder {
   receiverAddress    String
 }
 
+model BuyStableCoinOrder {
+  id              Int      @id @default(autoincrement())
+  tokenName       String
+  tokenAddress    String   @unique
+  network         String
+  chainId         Int
+  priceRatio      Int
+  payMethod       String
+  paidAmount      Int
+  outAmount       Int
+  feeAmount       Int
+  orderedAt       DateTime @default(now())
+  status          String
+  phoneNumber     String   @unique
+  receiverAddress String
+}
+
+model SellStableCoinOrder {
+  id              Int      @id @default(autoincrement())
+  tokenName       String
+  tokenAddress    String   @unique
+  network         String
+  chainId         Int
+  priceRatio      Int
+  payMethod       String
+  paidAmount      Int
+  outAmount       Int
+  feeAmount       Int
+  orderedAt       DateTime @default(now())
+  status          String
+  phoneNumber     String   @unique
+  receiverAddress String
+}
+
 model SellCryptoOrder {
   id                 Int      @id @default(autoincrement())
   tokenName          String
